@@ -28,8 +28,9 @@ owner: Product Owner
 
 **Goal:** Cover Word docs the same way we cover Excel — scan (and where practical, redact) `.docx` via the existing optional office extra, without OCR or bloating the base wheel.
 
-**Tracking:** [#29](https://github.com/thelonewander3r/PIIScanner/issues/29)  
-**Branch:** `feature/sprint13-docx` → PR → LGTM → PO merge  
+**Tracking:** [#29](https://github.com/thelonewander3r/PIIScanner/issues/29)
+**Branch:** `feature/sprint13-docx` → PR → LGTM → PO merge
+**Verify:** Local Tester (Windows local gate) — **no GHA** (Actions out of minutes).
 **Version:** land on `main` only; **no tag** unless Emanuel goes.
 
 ### In scope
@@ -53,7 +54,7 @@ owner: Product Owner
 
 - [ ] With `piilint[office]`, scan finds PII in synthetic `.docx`
 - [ ] Base install unchanged; skip message clear without office
-- [ ] Tests + CI green (incl. package-smoke without office)
+- [ ] Tests + Local Tester green (incl. package-smoke without office; no GHA)
 - [ ] README updated; Lead Dev LGTM; PO merge
 - [ ] Redact docx shipped or explicitly deferred in PR body
 
