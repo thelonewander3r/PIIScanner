@@ -134,7 +134,11 @@ def test_cli_baseline_and_subtract(tmp_path: Path) -> None:
         ["scan", str(tmp_path), "--baseline", str(baseline_path), "--fail-on", "low"],
     )
     assert result2.exit_code == 0, result2.output
-    assert "No PII findings" in result2.output or "0 high" in result2.output or result2.exit_code == 0
+    assert (
+        "No PII findings" in result2.output
+        or "0 high" in result2.output
+        or result2.exit_code == 0
+    )
 
     # Add a new finding → should surface
     (tmp_path / "extra.py").write_text("# other other@corpmail.test\n", encoding="utf-8")
