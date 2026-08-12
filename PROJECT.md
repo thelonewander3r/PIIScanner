@@ -77,7 +77,7 @@ Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
 | 1 | Corpus + engine core | Done |
 | 2 | Tabular + notebook adapters | Done |
 | 3 | Policy & noise | **Done** — [issue #1](https://github.com/thelonewander3r/PIIScanner/issues/1) closed via [PR #2](https://github.com/thelonewander3r/PIIScanner/pull/2) |
-| 4 | Baseline + staged mode | **In progress (Sprint 2)** — [issue #3](https://github.com/thelonewander3r/PIIScanner/issues/3) |
+| 4 | Baseline + staged mode | **Implemented on branch** (Sprint 2) — [issue #3](https://github.com/thelonewander3r/PIIScanner/issues/3); awaiting Lead Dev review / PR |
 | 5 | Reporters & DX polish | Not started |
 | 6 | Distribution | Not started |
 | 7 | Optional NER | After launch OK |
@@ -98,7 +98,7 @@ Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
 
 ---
 
-## Sprint 2 — Baseline + staged (NEXT)
+## Sprint 2 — Baseline + staged (IN REVIEW)
 
 **Goal:** Teams can adopt without fixing history first, and pre-commit only scans what is about to land.
 
@@ -123,11 +123,11 @@ Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
 
 ### Acceptance (Sprint 2 done when)
 
-- [ ] `piilint baseline` writes a stable, versioned baseline file
-- [ ] Scan with `--baseline` suppresses known findings and surfaces only new ones
-- [ ] Fingerprints ignore line numbers (documented + tested)
-- [ ] `--staged` limits scan to staged paths; clear error if not in a git repo / nothing staged as appropriate
-- [ ] `uv run pytest` green; ruff + mypy strict clean; benchmark gates hold with real numbers
+- [x] `piilint baseline` writes a stable, versioned baseline file
+- [x] Scan with `--baseline` suppresses known findings and surfaces only new ones
+- [x] Fingerprints ignore line numbers (documented + tested)
+- [x] `--staged` limits scan to staged paths; clear error if not in a git repo / nothing staged as appropriate
+- [x] `uv run pytest` green; ruff + mypy strict clean; benchmark gates hold with real numbers
 - [ ] Lead Developer review approved
 - [ ] PO cleanup; PR to `main`
 

@@ -246,11 +246,15 @@ def scan_path(
     include: list[str] | None = None,
     exclude: list[str] | None = None,
     sample_rows: int | None = None,
+    only_paths: list[Path] | None = None,
 ) -> ScanResult:
     """Scan a file or directory.
 
     Prefer passing a resolved ``Config``. Legacy kwargs override that config when
     provided (kept for unit tests / callers from Phase 1–2).
+
+    ``only_paths`` restricts the walk to an explicit allowlist (e.g. git-staged
+    files). Pass an empty list to scan zero files.
     """
     started = perf_counter()
     cfg = config.copy() if config is not None else default_config()
@@ -278,7 +282,12 @@ def scan_path(
     files_scanned = 0
 
     base = root if root.is_dir() else root.parent
-    for file_path in iter_files(root, include=include, exclude=cfg.scan.exclude or None):
+    for file_path in iter_files(
+        root,
+        include=include,
+        exclude=cfg.scan.exclude or None,
+        only_paths=only_paths,
+    ):
         adapter = select_adapter(file_path, adapters)
         if adapter is None:
             continue

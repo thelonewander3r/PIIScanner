@@ -266,7 +266,10 @@ Config file + precedence (`config.py` overlay merge so unspecified keys do not r
 
 **AC verified:** precedence CLI > `piilint.toml` > `[tool.piilint]` > defaults (partial-file overlay tested); bad TOML exit 2; unit tests for allowlist/downweight/suppressions/`.piiignore`/exclude; `uv run pytest` + benchmark gates; ruff + mypy strict on `src/`; no recognizer imports in adapters/findings/reporters; sample `piilint.toml` + README notes. Benchmark 2026-08-11 (local): HIGH-severity precision 1.000; CORE recall 1.000; all core entities P/R 1.000; 47 pytest passed.
 
-### Phase 4 — Baseline + staged mode (1–2 days) — NOT STARTED
+### Phase 4 — Baseline + staged mode (1–2 days) — DONE 2026-08-11
+`baseline.py` (versioned JSON fingerprints; write/load/subtract; no recognizer imports) + `gitutil.py` (stdlib subprocess; `staged_files` via `git diff --cached --name-only --diff-filter=ACMR`). CLI: `piilint baseline [PATH] -o/--output`, `piilint . --baseline PATH`, `piilint . --staged`. Walker/engine `only_paths` allowlist; baseline subtract after policy, before reporter. Fingerprints reuse `findings.fingerprint_for` (line-number independent). Empty staged → exit 0; not a git repo → exit 2.
+
+**AC verified:** baseline write stable versioned schema (fingerprints only); `--baseline` surfaces new findings only; fingerprint line-number independence unit-tested; `--staged` limits to staged paths; `uv run pytest` + benchmark gates; ruff + mypy strict on `src/`; README tradeoff documented.
 
 ### Phase 5 — Reporters & DX polish (1–2 days) — NOT STARTED
 
