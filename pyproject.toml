@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "piilint"
 version = "0.1.0"
-description = "Local-first PII scanner for notebooks, CSV, JSON, Parquet, and source code."
+description = "Local-first PII scanner for notebooks, CSV, JSON, Parquet, Excel, PDF, and source code."
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
@@ -41,6 +41,10 @@ ner = [
     "presidio-analyzer>=2.2.355,<3",
     "spacy!=3.7.0,>=3.7.2,<3.8.14",
 ]  # optional: Presidio + spaCy PERSON/ADDRESS (piilint[ner])
+office = [
+  "openpyxl>=3.1,<4",
+  "pypdf>=5.0,<7",
+]  # optional: Excel + PDF text extract (piilint[office]); no OCR
 dev = [
   "pytest>=8.0",
   "pytest-socket>=0.7",
@@ -102,6 +106,10 @@ module = [
   "presidio_analyzer.*",
   "spacy",
   "spacy.*",
+  "openpyxl",
+  "openpyxl.*",
+  "pypdf",
+  "pypdf.*",
 ]
 ignore_missing_imports = true
 
@@ -111,6 +119,7 @@ addopts = "--disable-socket --allow-unix-socket"
 pythonpath = ["src"]
 markers = [
   "ner: optional NER tests (may require piilint[ner] + spaCy model)",
+  "office: optional Excel/PDF tests (require piilint[office])",
 ]
 
 [tool.piilint]

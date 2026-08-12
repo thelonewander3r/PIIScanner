@@ -145,6 +145,33 @@ jobs:
           CI: "true"
         run: uv run piilint scan tests/corpus/text/names_addresses.txt --ner --fail-on never
 
+
+  # Optional Excel/PDF path ? separate so default matrix / package-smoke stay lean (no [office]).
+  office-smoke:
+    name: Optional office smoke (ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Sync with office + dev extras
+        run: uv sync --extra office --extra dev
+
+      - name: Office adapter tests
+        run: uv run pytest tests/unit/test_office.py -q
+
+      - name: Office scan smoke
+        env:
+          CI: "true"
+        run: |
+          uv run piilint scan tests/corpus/xlsx --fail-on never
+          uv run piilint scan tests/corpus/pdf/contacts.pdf --fail-on never
+
   # Lightweight composite action + hook YAML parse smoke (fail-on never → exit 0).
   action-smoke:
     name: Action + pre-commit config smoke

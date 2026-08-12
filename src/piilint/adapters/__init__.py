@@ -50,10 +50,14 @@ def default_adapters() -> Sequence[Adapter]:
     from piilint.adapters.json_ import JsonAdapter
     from piilint.adapters.notebook import NotebookAdapter
     from piilint.adapters.parquet import ParquetAdapter
+    from piilint.adapters.pdf import PdfAdapter
     from piilint.adapters.text import TextAdapter
+    from piilint.adapters.xlsx import XlsxAdapter
 
     return (
         NotebookAdapter(),
+        XlsxAdapter(),
+        PdfAdapter(),
         CsvAdapter(),
         ParquetAdapter(),
         JsonAdapter(),
