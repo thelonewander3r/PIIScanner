@@ -1,0 +1,10 @@
+# Synthetic locale national ID samples (not real people)
+# SIN_CA (Luhn-valid, separated — on by default)
+sin_ca_sep: 046-454-286
+sin_ca_spaces: 130 692 544
+# NINO_UK — with context words (enable via config; still labeled for optional scans)
+NINO: AB 12 34 56 C
+National Insurance number JH178354A
+# BSN_NL — 11-proef valid (enable via config)
+bsn: 100000009
+burgerservicenummer: 1000 00 010

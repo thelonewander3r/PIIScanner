@@ -13,3 +13,14 @@ invalid_ssn_9xx: 900-12-3456
 base64: SGVsbG8gV29ybGQhIE5vdCBQSukk
 integrity: sha512-AbCdEfGhIjKlMnOpQrStUvWxYz0123456789+/==
 lockhash: 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+
+# locale hard negatives (must stay clean at defaults)
+fail_luhn_sin: 123-456-789
+fail_luhn_sin_bare: 123456789
+fail_11proef_bsn: 123456789
+fail_11proef_bsn_spaced: 1234 56 789
+random_9digit_non_luhn: 111222333
+# NINO-shaped without context words — must not match (NINO_UK off + no context)
+QQ123456C
+AB123456A
+nino_shaped_no_ctx: JG103759A

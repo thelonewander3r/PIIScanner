@@ -35,8 +35,23 @@ class PhoneRecognizer:
     entity = EntityType.PHONE
     enabled_by_default = True
 
-    def __init__(self, default_region: str = "US") -> None:
-        self.default_region = default_region
+    def __init__(
+        self,
+        default_region: str = "US",
+        extra_regions: list[str] | None = None,
+    ) -> None:
+        primary = (default_region or "US").strip().upper() or "US"
+        extras = [
+            r.strip().upper() for r in (extra_regions or []) if isinstance(r, str) and r.strip()
+        ]
+        # Primary first, then extras; dedupe while preserving order.
+        regions: list[str] = []
+        for region in [primary, *extras]:
+            if region and region not in regions:
+                regions.append(region)
+        self.default_region = primary
+        self.extra_regions = [r for r in regions if r != primary]
+        self._regions = regions
 
     def scan(self, text: str, *, context_key: str | None = None) -> list[Match]:
         if not any(ch.isdigit() for ch in text):
@@ -54,11 +69,16 @@ class PhoneRecognizer:
                 continue
             if re.fullmatch(r"20\d{2}\d{6,}", digits):
                 continue
-            try:
-                parsed = phonenumbers.parse(candidate, self.default_region)
-            except phonenumbers.NumberParseException:
-                continue
-            if not phonenumbers.is_valid_number(parsed):
+            parsed = None
+            for region in self._regions:
+                try:
+                    candidate_parsed = phonenumbers.parse(candidate, region)
+                except phonenumbers.NumberParseException:
+                    continue
+                if phonenumbers.is_valid_number(candidate_parsed):
+                    parsed = candidate_parsed
+                    break
+            if parsed is None:
                 continue
             start, end = m.start(1), m.end(1)
             if (start, end) in seen:

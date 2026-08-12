@@ -1,0 +1,6 @@
+# International phones — UK local needs phone_regions=["GB"] without +country
+uk_local: 020 7946 0958
+# E.164 still works with US-only default
+uk_e164: +442079460958
+# NANP CA number (not 555-01xx test block) — matches US default region
+ca_nanp: 416-735-0182

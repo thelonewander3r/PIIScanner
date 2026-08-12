@@ -313,7 +313,7 @@ Prove install-from-wheel before any production `v*` tag ([issue #16](https://git
 
 - ~~`--redact` writing anonymized copies~~ ? **done (Sprint 9)** as `piilint redact PATH -o OUT` (base-wheel span rewrite; incl. notebooks + parquet string columns). No `presidio-anonymizer`.
 - Team layer (the paid product): shared policy packs, org-wide baselines, findings-**metadata** history dashboard (raw data never leaves the machine — only findings metadata).
-- ~~More formats: xlsx, PDF~~ ? **scan via `piilint[office]` (Sprint 11)**; PDF text-only / no OCR; PDF redact deferred. More locales still follow-up.
+- ~~More formats: xlsx, PDF~~ ? **scan via `piilint[office]` (Sprint 11)**; PDF text-only / no OCR; PDF redact deferred. Locales: Sprint 12 adds `SIN_CA` / `NINO_UK` / `BSN_NL` + `phone_regions`; further world-ID catalog still follow-up.
 - **Chassis reuse:** the adapter/findings/baseline/reporter chassis is deliberately generic. Candidate sibling product: dataset diffing (DataDiff CI). Revisit after this ships; do not speculatively generalize now.
 
 ## Name candidates (Phase 0 verifies) — RESOLVED

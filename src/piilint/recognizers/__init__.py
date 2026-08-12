@@ -52,22 +52,36 @@ class RecognizerRegistry:
 def build_default_registry(
     *,
     default_phone_region: str = "US",
+    phone_regions: list[str] | None = None,
     enable_ip: bool = False,
     enable_ner: bool = False,
+    enable_nino_uk: bool = False,
+    enable_bsn_nl: bool = False,
 ) -> RecognizerRegistry:
+    from piilint.recognizers.bsn_nl import BsnNlRecognizer
     from piilint.recognizers.credit_card import CreditCardRecognizer
     from piilint.recognizers.dob import DobRecognizer
     from piilint.recognizers.email import EmailRecognizer
     from piilint.recognizers.iban import IbanRecognizer
     from piilint.recognizers.ip import IpAddressRecognizer
     from piilint.recognizers.ner import AddressRecognizer, PersonRecognizer
+    from piilint.recognizers.nino_uk import NinoUkRecognizer
     from piilint.recognizers.phone import PhoneRecognizer
+    from piilint.recognizers.sin_ca import SinCaRecognizer
     from piilint.recognizers.ssn import SsnUsRecognizer
 
     registry = RecognizerRegistry()
     registry.register(EmailRecognizer())
-    registry.register(PhoneRecognizer(default_region=default_phone_region))
+    registry.register(
+        PhoneRecognizer(
+            default_region=default_phone_region,
+            extra_regions=phone_regions,
+        )
+    )
     registry.register(SsnUsRecognizer())
+    registry.register(SinCaRecognizer())
+    registry.register(NinoUkRecognizer(), enabled=enable_nino_uk)
+    registry.register(BsnNlRecognizer(), enabled=enable_bsn_nl)
     registry.register(CreditCardRecognizer())
     registry.register(IbanRecognizer())
     registry.register(DobRecognizer())

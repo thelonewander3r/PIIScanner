@@ -46,6 +46,12 @@ def test_mask_ssn_full() -> None:
     assert mask_value("234-56-7890", EntityType.SSN_US) == "***-**-****"
 
 
+def test_mask_locale_national_ids() -> None:
+    assert mask_value("046-454-286", EntityType.SIN_CA) == "***-***-***"
+    assert mask_value("AB123456C", EntityType.NINO_UK) == "** ****** *"
+    assert mask_value("100000009", EntityType.BSN_NL) == "*********"
+
+
 def test_finding_never_stores_raw() -> None:
     f = Finding.create(
         entity=EntityType.EMAIL,

@@ -76,6 +76,21 @@ cases:
         count: 2
         location_hints: ["output"]
 
+
+  - path: text/locale_ids.txt
+    adapter: text
+    expected:
+      - entity: SIN_CA
+        count: 2
+      # NINO_UK / BSN_NL are off by default — no expected findings at defaults
+
+  - path: text/phones_intl.txt
+    adapter: text
+    expected:
+      # uk_local needs GB region; uk_e164 + ca_nanp match with US/NANP default
+      - entity: PHONE
+        count: 2
+
   # Optional NER (PERSON/ADDRESS). Skipped by core benchmark gate unless --ner + model.
   - path: text/names_addresses.txt
     adapter: text
