@@ -15,63 +15,59 @@ owner: Product Owner
 
 ## Status
 
-`piilint` **0.1.0** is on PyPI. Sprints 9–11 on `main` (redact + policy packs + `piilint[office]`).
+`piilint` **0.1.0** is on PyPI. Sprints 9–12 on `main` (redact, policy packs, `piilint[office]` xlsx/PDF, locales).
 
-**Next (Emanuel 2026-08-12):** Sprint 12 in progress ([#26](https://github.com/thelonewander3r/PIIScanner/issues/26)) — SIN_CA / NINO_UK / BSN_NL + multi-region phone.  
+**Next (Emanuel 2026-08-12):** Sprint 13 — **docx** scan (+ redact stretch) under `piilint[office]`.  
 **Hold:** no `v0.2.0` / prod `v*` tags without Emanuel’s explicit go.
+
+**Queued after (strategic):** paid team / findings-metadata layer design — say if you want that instead of more formats.
 
 ---
 
-## Sprint 12 — Locale coverage (IN PROGRESS)
+## Sprint 13 — docx adapters (NEXT)
 
-**Goal:** Stop being “US startup only.” Improve phone multi-region behavior and add a **small, precision-first** set of non-US national-ID recognizers with real validators where they exist. No compliance claims.
+**Goal:** Cover Word docs the same way we cover Excel — scan (and where practical, redact) `.docx` via the existing optional office extra, without OCR or bloating the base wheel.
 
-**Tracking:** [Issue #26](https://github.com/thelonewander3r/PIIScanner/issues/26) · SIN_CA / NINO_UK / BSN_NL + multi-region phone  
-**Branch:** `feature/sprint12-locale-coverage` → PR → LGTM → PO merge  
+**Tracking:** issue to be opened by Lead Dev from this scope call  
+**Branch:** off `main` → PR → LGTM → PO merge  
 **Version:** land on `main` only; **no tag** unless Emanuel goes.
 
 ### In scope
 
-1. **Phone multi-region** — today default region is US (`phone_region` / `PhoneRecognizer`). Extend so orgs can set one primary region **and** optionally extra regions (or document a clear multi-region story Lead Dev designs). Must not explode false positives on US corpora. Keep using `phonenumbers` (already a base dep).
-2. **National IDs (pick ~2–4, checksum/context required)** — examples Lead Dev may choose from (not a mandate to do all):
-   - Canada SIN (Luhn) as e.g. `SIN_CA`
-   - UK National Insurance (strict format + strong context words; precision over recall)
-   - One EU national ID **with** a known checksum (e.g. NL BSN 11-check) if it fits cleanly
-   - Prefer **off by default** or region-gated if noise risk is high — Lead Dev decides; document defaults
-3. **Config / policy** — `entity_enabled` toggles; wire into severity/allowlists/baseline fingerprints like other entities. Example policy pack note or a fourth pack only if cheap.
-4. **Corpus + gates** — synthetic true positives + hard negatives per new entity; **core US gates must not regress** (email/phone/ssn/card/iban). New entities may have separate metrics if not in the core recall gate.
-5. **Docs** — README: how to set regions / enable IDs; hard disclaimer (detection aid, not legal ID verification, not GDPR/HIPAA/PCI). Update BUILD_PLAN “more locales” note.
-6. **Redact** — new entities must mask via existing `mask_value` path (no raw PII in outputs).
-7. **Deps** — prefer no new packages; **ask before** adding any.
+1. **docx scan adapter** — `.docx` paragraph + table cell text (headers/footers if cheap). Chassis boundaries intact. Skip `.doc` (legacy binary) unless trivial — default **no**.
+2. **Extra** — fold into existing `piilint[office]` (add python-docx or Lead Dev’s pick). **Ask before** locking the dep. Missing extra → same clear skip pattern as xlsx/PDF.
+3. **Redact stretch** — cleaned `.docx` copies under `piilint redact -o` for paragraph/table text if it fits safely; otherwise defer explicitly (don’t corrupt documents).
+4. **Corpus + tests** — synthetic `.docx` with fake PII + hard negatives; office smoke extended or parallel; package-smoke still without office.
+5. **Docs** — README supported formats; BUILD_PLAN note; no compliance claims.
+6. **Windows-first**
 
 ### Out of scope
 
-- Exhaustive world catalog of national IDs
-- OCR / address localization / non-English NER models
-- PDF redact, docx
-- Paid team / metadata layer
+- Legacy `.doc`, macros-as-code analysis, embedded images/OCR
+- PDF redact (still deferred)
+- Paid team / metadata SaaS
 - Cutting a PyPI tag
-- Compliance certification language anywhere
+- More national-ID locales (unless tiny drive-by)
 
 ### Acceptance
 
-- [ ] Multi-region phone story works and is documented; US default behavior stays sane
-- [ ] ≥2 new national-ID (or clearly scoped locale) recognizers with validators/context; tests prove precision on hard negatives
-- [ ] Core benchmark gates still green with real numbers
-- [ ] Config toggles + masking work; ruff/mypy/CI green
-- [ ] README + disclaimer updated
-- [ ] Lead Dev LGTM; PO merge
+- [ ] With `piilint[office]`, scan finds PII in synthetic `.docx`
+- [ ] Base install unchanged; skip message clear without office
+- [ ] Tests + CI green (incl. package-smoke without office)
+- [ ] README updated; Lead Dev LGTM; PO merge
+- [ ] Redact docx shipped or explicitly deferred in PR body
 
 ### Roles
 
-- **Developer:** feature branch; report AC + gate numbers
-- **Lead Developer:** open issue; choose exact ID set + on/off defaults; review
+- **Developer:** feature branch; report AC
+- **Lead Developer:** open issue; pick docx library; review
 - **Product Owner:** this scope; merge; hold tags
 
 ---
 
 ## Recent done
 
+- Sprint 12 — locales (phone_regions + SIN_CA / NINO_UK / BSN_NL) — [#27](https://github.com/thelonewander3r/PIIScanner/pull/27)
 - Sprint 11 — `piilint[office]` xlsx/PDF — [#25](https://github.com/thelonewander3r/PIIScanner/pull/25)
 - Sprint 10 — notebook + parquet redact — [#23](https://github.com/thelonewander3r/PIIScanner/pull/23)
 - Sprint 9 — redact + policy packs — [#21](https://github.com/thelonewander3r/PIIScanner/pull/21)
@@ -80,4 +76,4 @@ owner: Product Owner
 
 ## Later backlog
 
-Team metadata history (paid wedge), IDE/PR UX, signed releases narrative; PDF redact; docx; more locales beyond this sprint.
+Team metadata history (paid wedge) — **design next after formats if Emanuel agrees**; IDE/PR UX; signed releases narrative; PDF redact; more locales.
