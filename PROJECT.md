@@ -16,70 +16,87 @@ Living PO doc for **scope**, **requirements**, and **sprints**. Technical detail
 
 ## Status
 
-All BUILD_PLAN phases **0–8** are on `main` (including optional NER). **Sprint 7 prep** (metadata, CHANGELOG, README, `docs/RELEASE.md`, `uv build` dry-run) is underway on `feature/sprint7-pypi-prep`. Package is **not published**; no `v*` tag without Emanuel’s explicit go.
+All BUILD_PLAN phases **0–8** are on `main` (including optional NER). **Sprint 7 prep** merged via [#15](https://github.com/thelonewander3r/PIIScanner/pull/15). **Sprint 8** (release hardening) is in progress on `feature/sprint8-release-hardening` — [issue #16](https://github.com/thelonewander3r/PIIScanner/issues/16). Package is **not published**; no `v*` tag without Emanuel’s explicit go.
 
 | Area | Status |
 |---|---|
 | Phases 0–6, 8 | Done |
 | Phase 7 NER | Done — [#12](https://github.com/thelonewander3r/PIIScanner/issues/12) / [#13](https://github.com/thelonewander3r/PIIScanner/pull/13) |
-| First PyPI / `v0.1.0` | **Prep in progress (Sprint 7)** — [issue #14](https://github.com/thelonewander3r/PIIScanner/issues/14); **not published**; no tag without Emanuel go |
+| Sprint 7 PyPI prep | **Done (prep)** — [#14](https://github.com/thelonewander3r/PIIScanner/issues/14) / [#15](https://github.com/thelonewander3r/PIIScanner/pull/15); **not published** |
+| Sprint 8 release hardening | **In progress** — [#16](https://github.com/thelonewander3r/PIIScanner/issues/16); branch `feature/sprint8-release-hardening` |
+| First PyPI / `v0.1.0` | **Blocked on Emanuel go** after hardening + UI publisher; no tag yet |
 
 ---
 
-## Sprint 7 — First PyPI release prep (IN PROGRESS)
+## Sprint 8 — Release hardening (IN PROGRESS)
 
-**Goal:** Make `piilint` installable via PyPI (`pipx`/`uvx`/`pip`) with a clean 0.1.0 release, without surprising publishes.
+**Goal:** Prove strangers can install a built `piilint` artifact — not only that `uv sync --extra dev` tests pass on a checkout — before any production `v*` tag.
 
-**Tracking:** [Issue #14](https://github.com/thelonewander3r/PIIScanner/issues/14) · branch `feature/sprint7-pypi-prep` · runbook [`docs/RELEASE.md`](./docs/RELEASE.md)  
-**Hard rule:** Do **not** push a `v*` tag or publish until Emanuel explicitly says go.
-
-### Prep status (this sprint)
-
-| Item | Status |
-|---|---|
-| `pyproject.toml` 0.1.0 metadata | Ready for review (authors, urls, classifiers, hatch targets, `[ner]` extra) |
-| Trusted publisher checklist | Documented in README + `docs/RELEASE.md`; **blocked on Emanuel UI** (PyPI pending publisher + GitHub `pypi` env) |
-| Local `uv build` dry-run | Done on prep branch; inspect sdist/wheel; do not commit `dist/` |
-| CHANGELOG fold Unreleased → `[0.1.0]` | Prepped (date `TBD` until tag day; includes NER) |
-| README install | PyPI primary **once published**; git/local fallback until then; does not claim published |
-| `docs/RELEASE.md` runbook | Added |
-| Tag / PyPI publish | **Not done** — wait for Emanuel go |
+**Tracking:** [Issue #16](https://github.com/thelonewander3r/PIIScanner/issues/16) · branch `feature/sprint8-release-hardening` · runbook [`docs/RELEASE.md`](./docs/RELEASE.md)  
+**Hard rule:** Do **not** push a production `v*` tag or upload to prod PyPI. TestPyPI dry-run upload only with Emanuel go.
 
 ### In scope
 
-1. **Version / metadata** — confirm `pyproject.toml` version `0.1.0` (or agreed), name `piilint`, classifiers, entry points, `project.urls`, optional `[ner]` extra documented
-2. **Trusted publishing checklist** — document/verify GitHub `pypi` environment + PyPI trusted publisher for `thelonewander3r/PIIScanner` → `release.yml` OIDC job (**Emanuel-only** UI steps)
-3. **Release dry-run** — `uv build` locally; sanity-check sdist/wheel contents (no secrets, corpus excluded from sdist); optional TestPyPI dry-run if Emanuel wants
-4. **CHANGELOG** — fold Unreleased notes into `0.1.0` section (date on tag day)
-5. **README** — install from PyPI as primary path once published; git/dev install until then
-6. **Release PR** — version/changelog/README/runbook only; CI green; **tag is a separate, explicit step** after merge + Emanuel go
-7. **Post-go runbook** — [`docs/RELEASE.md`](./docs/RELEASE.md): trusted publisher → wait for go → `git tag v0.1.0 && git push origin v0.1.0` → watch `release.yml` → verify `uvx`/`pipx`
+1. **CI package build + install-from-wheel smoke** — `package-smoke` on ubuntu + windows: `uv build` → clean venv → install wheel → `piilint --version` → scan corpus with expected exit 1 + masked output
+2. **Optional NER smoke** — separate `ner-smoke` job (ubuntu); must not break default matrix
+3. **TestPyPI docs** — trusted-publisher dry-run path in `docs/RELEASE.md` (no upload without go)
+4. **Action / pre-commit smoke** — CI `action-smoke` (`uses: ./`, YAML parse)
+5. **Docs** — “How we know releases are good”; status here + BUILD_PLAN
 
 ### Out of scope
 
-- Cutting the tag in this sprint without Emanuel’s go
-- Marketplace listing / SEO deep dive
-- New features
-- Claiming the package is on PyPI before the tag succeeds
+- Production `v0.1.0` tag / prod PyPI upload
+- New detection features / NER quality campaigns
+- Paid team layer / business backlog items unless explicitly pulled forward
 
 ### Acceptance
 
-- [x] Metadata reviewed/fixed on prep branch (`0.1.0`, urls, classifiers, entry point, `[ner]`, hatch sdist excludes)
-- [x] Trusted publisher checklist confirmed in README + `docs/RELEASE.md`; **blocked on Emanuel UI** (PyPI pending publisher + GitHub `pypi` env)
-- [x] Local `uv build` dry-run + artifact inspection (prep branch; `dist/` untracked / cleaned)
-- [x] CHANGELOG folded for `[0.1.0]` (date TBD until tag day; includes NER)
-- [x] README install wording (PyPI primary once published; git until then; does not claim published)
-- [x] Written runbook [`docs/RELEASE.md`](./docs/RELEASE.md)
-- [ ] Release prep PR merged; CI green; Lead Dev review
-- [ ] Trusted publisher / `pypi` env completed in UI by Emanuel
-- [ ] Tag/publish only after Emanuel’s explicit go — **not published yet**
+- [x] CI YAML proves `uv build` + clean-install smoke on ≥2 OSes (`package-smoke`)
+- [x] Default (no-ner) smoke is a **required** separate job (not `continue-on-error`)
+- [x] `docs/RELEASE.md` updated (hardening + TestPyPI notes + “How we know releases are good”)
+- [x] Local `uv run pytest` green (verified on hardening branch)
+- [ ] Lead Dev LGTM; PO merge; still stop before prod tag
+- [ ] Remote CI green on PR (pending push)
 
 ### Roles
 
-- **Developer:** prep PR (version/changelog/docs); help verify build
-- **Lead Developer:** open issue, review prep PR, advise on publisher setup
-- **Product Owner:** this scope; merge prep; **stop before tag** until Emanuel go
-- **Emanuel:** PyPI/GitHub publisher UI; explicit go to tag
+- **Developer:** implement on `feature/sprint8-release-hardening`; open PR; comment on #16
+- **Lead Developer:** review
+- **Product Owner:** merge; hold tag until Emanuel go
+- **Emanuel:** TestPyPI dry-run go (if wanted); prod tag go after hardening
+
+---
+
+## Sprint 7 — First PyPI release prep (DONE — prep merged)
+
+**Goal:** Make `piilint` installable via PyPI (`pipx`/`uvx`/`pip`) with a clean 0.1.0 release, without surprising publishes.
+
+**Tracking:** [Issue #14](https://github.com/thelonewander3r/PIIScanner/issues/14) · PR [#15](https://github.com/thelonewander3r/PIIScanner/pull/15) merged · runbook [`docs/RELEASE.md`](./docs/RELEASE.md)  
+**Hard rule:** Do **not** push a `v*` tag or publish until Emanuel explicitly says go.
+
+### Prep status
+
+| Item | Status |
+|---|---|
+| `pyproject.toml` 0.1.0 metadata | Done (merged #15) |
+| Trusted publisher checklist | Documented in README + `docs/RELEASE.md`; **blocked on Emanuel UI** |
+| Local `uv build` dry-run | Done on prep branch |
+| CHANGELOG fold Unreleased → `[0.1.0]` | Done (date `TBD` until tag day) |
+| README install | PyPI primary **once published**; git/local fallback until then |
+| `docs/RELEASE.md` runbook | Added (extended in Sprint 8) |
+| Tag / PyPI publish | **Not done** — wait for hardening + Emanuel go |
+
+### Acceptance
+
+- [x] Metadata reviewed/fixed (`0.1.0`, urls, classifiers, entry point, `[ner]`, hatch sdist excludes)
+- [x] Trusted publisher checklist in README + `docs/RELEASE.md`; **blocked on Emanuel UI**
+- [x] Local `uv build` dry-run + artifact inspection
+- [x] CHANGELOG folded for `[0.1.0]` (date TBD; includes NER)
+- [x] README install wording
+- [x] Written runbook [`docs/RELEASE.md`](./docs/RELEASE.md)
+- [x] Release prep PR merged (#15); CI green path for prep
+- [ ] Trusted publisher / `pypi` env completed in UI by Emanuel
+- [ ] Tag/publish only after Emanuel’s explicit go — **not published yet**
 
 ---
 
