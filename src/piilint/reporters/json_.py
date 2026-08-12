@@ -2,7 +2,8 @@
 
 ``config_hash`` is SHA-256 of a canonical JSON object built from the effective
 scan Config fields that affect detection/policy (fail_on, min_confidence,
-exclude, entity_enabled, severity_overrides, allowlists, phone_region).
+exclude, entity_enabled, severity_overrides, allowlists, phone_region,
+phone_regions).
 Volatile paths and timestamps are excluded so the hash is stable across runs
 with the same policy.
 """
@@ -40,6 +41,7 @@ def config_hash(config: Config) -> str:
         "fail_on": config.scan.fail_on,
         "min_confidence": config.scan.min_confidence,
         "phone_region": config.scan.phone_region,
+        "phone_regions": list(config.scan.phone_regions),
         "severity_overrides": severity_overrides,
     }
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)

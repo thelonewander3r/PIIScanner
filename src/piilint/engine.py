@@ -42,6 +42,14 @@ def _worth_running(entity: EntityType, text: str, context_key: str | None = None
         return sum(1 for ch in text if ch.isdigit()) >= 10
     if entity == EntityType.SSN_US:
         return sum(1 for ch in text if ch.isdigit()) >= 9
+    if entity == EntityType.SIN_CA:
+        return sum(1 for ch in text if ch.isdigit()) >= 9
+    if entity == EntityType.BSN_NL:
+        return sum(1 for ch in text if ch.isdigit()) >= 9
+    if entity == EntityType.NINO_UK:
+        has_letter = any(ch.isalpha() for ch in text)
+        has_digit = any(ch.isdigit() for ch in text)
+        return has_letter and has_digit
     if entity == EntityType.CREDIT_CARD:
         return sum(1 for ch in text if ch.isdigit()) >= 13
     if entity == EntityType.IBAN:
@@ -231,8 +239,11 @@ def _build_registry(config: Config, *, enable_ner: bool = False) -> RecognizerRe
 
     registry = build_default_registry(
         default_phone_region=config.scan.phone_region,
+        phone_regions=list(config.scan.phone_regions),
         enable_ip=config.is_entity_enabled(EntityType.IP_ADDRESS),
         enable_ner=False,
+        enable_nino_uk=config.is_entity_enabled(EntityType.NINO_UK),
+        enable_bsn_nl=config.is_entity_enabled(EntityType.BSN_NL),
     )
     # Apply entity enable/disable from config; --ner forces PERSON+ADDRESS on for the run.
     for entity in list(EntityType):
@@ -254,6 +265,7 @@ def scan_path(
     enable_ip: bool | None = None,
     enable_ner: bool = False,
     phone_region: str | None = None,
+    phone_regions: list[str] | None = None,
     include: list[str] | None = None,
     exclude: list[str] | None = None,
     sample_rows: int | None = None,
@@ -278,6 +290,10 @@ def scan_path(
         cfg.entity_enabled[EntityType.ADDRESS] = True
     if phone_region is not None:
         cfg.scan.phone_region = phone_region
+    if phone_regions is not None:
+        cfg.scan.phone_regions = [
+            r.strip().upper() for r in phone_regions if isinstance(r, str) and r.strip()
+        ]
     if exclude is not None:
         cfg.scan.exclude = list(exclude)
 

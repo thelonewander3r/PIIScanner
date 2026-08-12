@@ -16,6 +16,9 @@ from typing import Any
 class EntityType(str, Enum):
     CREDIT_CARD = "CREDIT_CARD"
     SSN_US = "SSN_US"
+    SIN_CA = "SIN_CA"
+    NINO_UK = "NINO_UK"
+    BSN_NL = "BSN_NL"
     IBAN = "IBAN"
     EMAIL = "EMAIL"
     PHONE = "PHONE"
@@ -34,6 +37,9 @@ class Severity(str, Enum):
 DEFAULT_SEVERITY: dict[EntityType, Severity] = {
     EntityType.CREDIT_CARD: Severity.HIGH,
     EntityType.SSN_US: Severity.HIGH,
+    EntityType.SIN_CA: Severity.HIGH,
+    EntityType.NINO_UK: Severity.HIGH,
+    EntityType.BSN_NL: Severity.HIGH,
     EntityType.IBAN: Severity.HIGH,
     EntityType.EMAIL: Severity.MEDIUM,
     EntityType.PHONE: Severity.MEDIUM,
@@ -47,11 +53,19 @@ DEFAULT_SEVERITY: dict[EntityType, Severity] = {
 def normalize_value(value: str, entity: EntityType) -> str:
     """Normalize a raw match for hashing / dedup (never for display)."""
     cleaned = value.strip()
-    if entity in {EntityType.CREDIT_CARD, EntityType.SSN_US, EntityType.PHONE, EntityType.IBAN}:
+    if entity in {
+        EntityType.CREDIT_CARD,
+        EntityType.SSN_US,
+        EntityType.SIN_CA,
+        EntityType.NINO_UK,
+        EntityType.BSN_NL,
+        EntityType.PHONE,
+        EntityType.IBAN,
+    }:
         cleaned = re.sub(r"[\s\-().]", "", cleaned)
     if entity == EntityType.EMAIL:
         cleaned = cleaned.lower()
-    if entity == EntityType.IBAN:
+    if entity in {EntityType.IBAN, EntityType.NINO_UK}:
         cleaned = cleaned.upper()
     if entity == EntityType.IP_ADDRESS:
         cleaned = cleaned.lower()
@@ -79,6 +93,12 @@ def mask_value(value: str, entity: EntityType) -> str:
         return f"**** **** **** {last4}"
     if entity == EntityType.SSN_US:
         return "***-**-****"
+    if entity == EntityType.SIN_CA:
+        return "***-***-***"
+    if entity == EntityType.NINO_UK:
+        return "** ****** *"
+    if entity == EntityType.BSN_NL:
+        return "*********"
     if entity == EntityType.IBAN:
         compact = re.sub(r"\s+", "", raw).upper()
         if len(compact) <= 4:

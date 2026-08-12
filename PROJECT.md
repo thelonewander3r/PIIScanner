@@ -17,17 +17,17 @@ owner: Product Owner
 
 `piilint` **0.1.0** is on PyPI. Sprints 9–11 on `main` (redact + policy packs + `piilint[office]`).
 
-**Next (Emanuel 2026-08-12):** Sprint 12 — **locale coverage** (phones + a few non-US national IDs).  
+**Next (Emanuel 2026-08-12):** Sprint 12 in progress ([#26](https://github.com/thelonewander3r/PIIScanner/issues/26)) — SIN_CA / NINO_UK / BSN_NL + multi-region phone.  
 **Hold:** no `v0.2.0` / prod `v*` tags without Emanuel’s explicit go.
 
 ---
 
-## Sprint 12 — Locale coverage (NEXT)
+## Sprint 12 — Locale coverage (IN PROGRESS)
 
 **Goal:** Stop being “US startup only.” Improve phone multi-region behavior and add a **small, precision-first** set of non-US national-ID recognizers with real validators where they exist. No compliance claims.
 
-**Tracking:** issue to be opened by Lead Dev from this scope call  
-**Branch:** off `main` → PR → LGTM → PO merge  
+**Tracking:** [Issue #26](https://github.com/thelonewander3r/PIIScanner/issues/26) · SIN_CA / NINO_UK / BSN_NL + multi-region phone  
+**Branch:** `feature/sprint12-locale-coverage` → PR → LGTM → PO merge  
 **Version:** land on `main` only; **no tag** unless Emanuel goes.
 
 ### In scope

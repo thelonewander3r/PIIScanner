@@ -112,9 +112,14 @@ Precedence (**highest wins**): CLI flags → `piilint.toml` at the scan root →
 fail_on = "high"
 min_confidence = 0.6
 exclude = ["tests/fixtures/**"]
+phone_region = "US"
+phone_regions = ["CA", "GB"]
 
 [entities]
 ip_address = false
+# Locale IDs: SIN_CA on by default; enable NINO_UK / BSN_NL when needed
+nino_uk = true
+bsn_nl = true
 [entities.email]
 severity = "medium"
 
@@ -122,6 +127,26 @@ severity = "medium"
 values  = ["support@mycompany.com"]
 domains = ["example.com", "mycompany.dev"]
 ```
+
+### Phone regions
+
+- `scan.phone_region` — primary default region for `phonenumbers` parsing (default `"US"`).
+- `scan.phone_regions` — optional extra ISO regions tried after the primary (default `[]`).
+  Candidates are validated with `phonenumbers.is_valid_number`; E.164 / `+country` numbers
+  still match without listing every region. US hard-negative corpora must stay clean.
+
+### Locale national IDs
+
+| Entity | Default | Notes |
+|---|---|---|
+| `SIN_CA` | **on** | Canadian SIN format + Luhn |
+| `NINO_UK` | **off** | Strict NI format; **requires** context (`NI` / `NINO` / `National Insurance`) |
+| `BSN_NL` | **off** | Dutch BSN + 11-proef checksum |
+
+Enable via `[entities] nino_uk = true` / `bsn_nl = true` (or `NINO_UK` / `BSN_NL`).
+
+> **Disclaimer (locale IDs):** These recognizers are a **detection aid** only. They are **not**
+> legal identity verification and do **not** make anyone GDPR, HIPAA, or PCI compliant.
 
 - **`.piiignore`** — gitignore-syntax path excludes (combined with `.gitignore`).
 - **Inline suppressions** (text/code lines): `# piilint: ignore` or `# piilint: ignore[EMAIL]` (comma-list). Not applied to tabular/column-aggregated findings in v0.
@@ -161,7 +186,7 @@ piilint . --format json --baseline piilint-baseline.json --fail-on high
 
 JSON includes a `config_hash`: SHA-256 of a canonical JSON snapshot of the **effective**
 scan config fields that affect detection/policy (`fail_on`, `min_confidence`, `exclude`,
-`entity_enabled`, `severity_overrides`, allowlists, `phone_region`). Paths and timestamps
+`entity_enabled`, `severity_overrides`, allowlists, `phone_region`, `phone_regions`). Paths and timestamps
 are excluded so the hash is stable across identical policy runs.
 
 `--show-matches` unmasks the console Sample column for local triage only. It is **refused**

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Sprint 12 locale coverage: multi-region phones via `scan.phone_region` + `scan.phone_regions`; national IDs `SIN_CA` (on, Luhn), `NINO_UK` (off, context-required), `BSN_NL` (off, 11-proef). Detection aid only — not legal ID verification / not GDPR-HIPAA-PCI compliance.
 - Optional `piilint[office]` (`openpyxl` + `pypdf`): scan `.xlsx`/`.xlsm` and PDF **embedded text** (no OCR); missing extra skips those files with a stderr hint.
 - `piilint redact` stretch: cleaned `.xlsx` copies. PDF redact deferred.
 - `piilint redact PATH -o OUT_DIR` ? write cleaned **copies** with PII spans rewritten via existing `mask_value` (text + json/jsonl + csv/tsv; no in-place; no new base deps).

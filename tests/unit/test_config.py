@@ -22,8 +22,13 @@ def test_defaults() -> None:
     cfg = default_config()
     assert cfg.scan.fail_on == "high"
     assert cfg.scan.min_confidence == 0.6
+    assert cfg.scan.phone_region == "US"
+    assert cfg.scan.phone_regions == []
     assert cfg.entity_enabled[EntityType.IP_ADDRESS] is False
     assert cfg.entity_enabled[EntityType.EMAIL] is True
+    assert cfg.entity_enabled[EntityType.SIN_CA] is True
+    assert cfg.entity_enabled[EntityType.NINO_UK] is False
+    assert cfg.entity_enabled[EntityType.BSN_NL] is False
 
 
 def test_piilint_toml_overrides_pyproject(tmp_path: Path) -> None:
@@ -171,3 +176,16 @@ def test_merge_later_wins() -> None:
     a = config_from_mapping({"scan": {"fail_on": "low"}}, source="a")
     b = config_from_mapping({"scan": {"fail_on": "high"}}, source="b")
     assert merge_configs(a, b).scan.fail_on == "high"
+
+
+def test_phone_regions_mapping() -> None:
+    cfg = config_from_mapping(
+        {"scan": {"phone_region": "ca", "phone_regions": ["gb", "US", ""]}},
+        source="t",
+    )
+    assert cfg.scan.phone_region == "CA"
+    assert cfg.scan.phone_regions == ["GB", "US"]
+    copied = cfg.copy()
+    assert copied.scan.phone_regions == ["GB", "US"]
+    copied.scan.phone_regions.append("DE")
+    assert cfg.scan.phone_regions == ["GB", "US"]

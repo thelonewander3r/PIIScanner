@@ -36,6 +36,12 @@ _ENTITY_ALIASES: dict[str, EntityType] = {
     "credit_card": EntityType.CREDIT_CARD,
     "ssn_us": EntityType.SSN_US,
     "ssn": EntityType.SSN_US,
+    "sin_ca": EntityType.SIN_CA,
+    "sin": EntityType.SIN_CA,
+    "nino_uk": EntityType.NINO_UK,
+    "nino": EntityType.NINO_UK,
+    "bsn_nl": EntityType.BSN_NL,
+    "bsn": EntityType.BSN_NL,
     "iban": EntityType.IBAN,
     "email": EntityType.EMAIL,
     "phone": EntityType.PHONE,
@@ -55,6 +61,8 @@ def _default_entity_enabled() -> dict[EntityType, bool]:
     enabled[EntityType.IP_ADDRESS] = False
     enabled[EntityType.PERSON] = False
     enabled[EntityType.ADDRESS] = False
+    enabled[EntityType.NINO_UK] = False
+    enabled[EntityType.BSN_NL] = False
     return enabled
 
 
@@ -64,6 +72,7 @@ class ScanConfig:
     min_confidence: float = 0.6
     exclude: list[str] = field(default_factory=list)
     phone_region: str = "US"
+    phone_regions: list[str] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -93,6 +102,7 @@ class Config:
                 min_confidence=self.scan.min_confidence,
                 exclude=list(self.scan.exclude),
                 phone_region=self.scan.phone_region,
+                phone_regions=list(self.scan.phone_regions),
             ),
             entity_enabled=dict(self.entity_enabled),
             severity_overrides=dict(self.severity_overrides),
@@ -178,6 +188,15 @@ def apply_mapping(cfg: Config, data: Mapping[str, Any], *, source: str) -> None:
             if not isinstance(region, str) or not region.strip():
                 raise ConfigError(f"{source}: scan.phone_region must be a non-empty string")
             cfg.scan.phone_region = region.strip().upper()
+        if "phone_regions" in scan_raw:
+            raw_regions = scan_raw["phone_regions"]
+            if not isinstance(raw_regions, list) or not all(
+                isinstance(x, str) for x in raw_regions
+            ):
+                raise ConfigError(f"{source}: scan.phone_regions must be a list of strings")
+            cfg.scan.phone_regions = [
+                r.strip().upper() for r in raw_regions if isinstance(r, str) and r.strip()
+            ]
 
     entities_raw = data.get("entities")
     if entities_raw is not None:
@@ -281,6 +300,7 @@ def merge_configs(*configs: Config) -> Config:
         result.scan.fail_on = cfg.scan.fail_on
         result.scan.min_confidence = cfg.scan.min_confidence
         result.scan.phone_region = cfg.scan.phone_region
+        result.scan.phone_regions = list(cfg.scan.phone_regions)
         if cfg.scan.exclude:
             result.scan.exclude = list(cfg.scan.exclude)
         result.entity_enabled.update(cfg.entity_enabled)
