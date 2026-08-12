@@ -393,7 +393,7 @@ def redact_cmd(
 
     Honors the same config/policy as scan (entity toggles, allowlists, inline
     suppressions, min_confidence, excludes). Formats: text, json/jsonl, csv/tsv,
-    notebooks, parquet (string columns), and xlsx (requires piilint[office]).
+    notebooks, parquet (string columns), xlsx, and docx (requires piilint[office]).
     PDF redact deferred. No in-place mode.
     """
     if output is None:

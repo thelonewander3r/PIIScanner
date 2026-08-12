@@ -47,6 +47,7 @@ class Adapter(Protocol):
 def default_adapters() -> Sequence[Adapter]:
     """Most-specific adapters first; TextAdapter is the fallback."""
     from piilint.adapters.csv_ import CsvAdapter
+    from piilint.adapters.docx_ import DocxAdapter
     from piilint.adapters.json_ import JsonAdapter
     from piilint.adapters.notebook import NotebookAdapter
     from piilint.adapters.parquet import ParquetAdapter
@@ -57,6 +58,7 @@ def default_adapters() -> Sequence[Adapter]:
     return (
         NotebookAdapter(),
         XlsxAdapter(),
+        DocxAdapter(),
         PdfAdapter(),
         CsvAdapter(),
         ParquetAdapter(),

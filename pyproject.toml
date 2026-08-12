@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "piilint"
 version = "0.1.0"
-description = "Local-first PII scanner for notebooks, CSV, JSON, Parquet, Excel, PDF, and source code."
+description = "Local-first PII scanner for notebooks, CSV, JSON, Parquet, Excel, Word, PDF, and source code."
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
@@ -44,7 +44,8 @@ ner = [
 office = [
   "openpyxl>=3.1,<4",
   "pypdf>=5.0,<7",
-]  # optional: Excel + PDF text extract (piilint[office]); no OCR
+  "python-docx>=1.1,<2",
+]  # optional: Excel + Word + PDF text extract (piilint[office]); no OCR / no legacy .doc
 dev = [
   "pytest>=8.0",
   "pytest-socket>=0.7",
@@ -110,6 +111,8 @@ module = [
   "openpyxl.*",
   "pypdf",
   "pypdf.*",
+  "docx",
+  "docx.*",
 ]
 ignore_missing_imports = true
 
@@ -119,7 +122,7 @@ addopts = "--disable-socket --allow-unix-socket"
 pythonpath = ["src"]
 markers = [
   "ner: optional NER tests (may require piilint[ner] + spaCy model)",
-  "office: optional Excel/PDF tests (require piilint[office])",
+  "office: optional Excel/Word/PDF tests (require piilint[office])",
 ]
 
 [tool.piilint]

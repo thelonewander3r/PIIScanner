@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/thelonewander3r/PIIScanner/actions/workflows/ci.yml/badge.svg)](https://github.com/thelonewander3r/PIIScanner/actions/workflows/ci.yml)
 
-Local-first PII scanner for the files developers actually commit and send — notebooks, CSV, JSON, Parquet, and source code. **Nothing leaves your machine.**
+Local-first PII scanner for the files developers actually commit and send — notebooks, CSV, JSON, Parquet, Excel/Word/PDF (optional), and source code. **Nothing leaves your machine.**
 
 > **Disclaimer:** piilint helps you find sensitive data before it leaks. It is a detection aid, not a compliance certification, and cannot guarantee that all sensitive data is found. It does not make anyone GDPR/HIPAA/PCI compliant.
 
@@ -330,6 +330,19 @@ piilint . --ner               # enable PERSON + ADDRESS for this run
 
 ---
 
+## Optional office formats (Excel, Word, PDF)
+
+Excel (`.xlsx`/`.xlsm`), Word (`.docx`), and PDF **embedded text** scanning live behind an optional extra so the base install stays lean:
+
+```bash
+pip install "piilint[office]"    # or: uv sync --extra office
+piilint scan ./docs
+```
+
+- Without `[office]`, those files are skipped with a one-time stderr install hint; other formats keep scanning.
+- **No OCR** (image-only PDFs yield nothing). **No legacy `.doc`** (Word 97–2003 binary).
+- `piilint redact -o` can write cleaned `.xlsx` and `.docx` copies when `[office]` is installed. PDF redact is deferred.
+
 ## Redact (cleaned copies)
 
 Write **copies** with PII spans replaced by the same masks as findings (no in-place overwrite in v1):
@@ -338,7 +351,7 @@ Write **copies** with PII spans replaced by the same masks as findings (no in-pl
 piilint redact ./data -o ./data-clean
 ```
 
-Supported today: **text** + **json/jsonl** + **csv/tsv** + **notebooks** + **parquet** (string columns) + **xlsx/xlsm** + **PDF embedded text** (via optional `piilint[office]`; **no OCR**). PDF redact deferred. Uses the base wheel only (no new deps / no `presidio-anonymizer`). Honors the same config/policy as `scan` (allowlists, `# piilint: ignore`, entity toggles, `min_confidence`, excludes). Sources under the input path are never modified.
+Supported today: **text** + **json/jsonl** + **csv/tsv** + **notebooks** + **parquet** (string columns) + **xlsx/xlsm** + **docx** + **PDF embedded text** (via optional `piilint[office]`; **no OCR** / **no legacy `.doc`**). PDF redact deferred. Uses the base wheel only (no new deps / no `presidio-anonymizer`). Honors the same config/policy as `scan` (allowlists, `# piilint: ignore`, entity toggles, `min_confidence`, excludes). Sources under the input path are never modified.
 
 ## Example policy packs
 

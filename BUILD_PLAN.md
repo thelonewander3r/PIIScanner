@@ -77,7 +77,7 @@ You (the agent) are building a production-quality open-source Python CLI. Rules:
 
 - **Not a secrets scanner.** No API keys, tokens, or passwords — gitleaks/trufflehog own that. Docs recommend pairing with gitleaks. This keeps positioning sharp.
 - **Detect-first.** v0 was detect-only; **`piilint redact`** (Sprint 9) writes cleaned **copies** via base-wheel span rewrite (`mask_value`) ? no `presidio-anonymizer` / no new base deps. Notebooks/parquet redact included (Sprint 10).
-- **No databases, PDFs, docx/xlsx, images/OCR** in v0. File formats listed below only.
+- **No databases, images/OCR** in v0. Office formats (xlsx/docx/PDF text) are post-MVP via optional `piilint[office]` (Sprints 11/13). File formats listed below only.
 - **No telemetry** in v0. If ever added, opt-in only.
 - **English-first** detection; NER for other languages is post-MVP.
 
@@ -313,7 +313,7 @@ Prove install-from-wheel before any production `v*` tag ([issue #16](https://git
 
 - ~~`--redact` writing anonymized copies~~ ? **done (Sprint 9)** as `piilint redact PATH -o OUT` (base-wheel span rewrite; incl. notebooks + parquet string columns). No `presidio-anonymizer`.
 - Team layer (the paid product): shared policy packs, org-wide baselines, findings-**metadata** history dashboard (raw data never leaves the machine — only findings metadata).
-- ~~More formats: xlsx, PDF~~ ? **scan via `piilint[office]` (Sprint 11)**; PDF text-only / no OCR; PDF redact deferred. Locales: Sprint 12 adds `SIN_CA` / `NINO_UK` / `BSN_NL` + `phone_regions`; further world-ID catalog still follow-up.
+- ~~More formats: xlsx, PDF, docx~~ — **scan via `piilint[office]` (Sprints 11/13)**; PDF text-only / no OCR / no legacy `.doc`; PDF redact deferred; docx redact shipped as stretch. Locales: Sprint 12 adds `SIN_CA` / `NINO_UK` / `BSN_NL` + `phone_regions`; further world-ID catalog still follow-up.
 - **Chassis reuse:** the adapter/findings/baseline/reporter chassis is deliberately generic. Candidate sibling product: dataset diffing (DataDiff CI). Revisit after this ships; do not speculatively generalize now.
 
 ## Name candidates (Phase 0 verifies) — RESOLVED

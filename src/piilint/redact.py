@@ -11,7 +11,7 @@ import io
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from piilint.adapters.text import TextAdapter, looks_binary
 from piilint.config import Config
@@ -57,6 +57,8 @@ def _supported(path: Path) -> str | None:
         return "parquet"
     if suffix in {".xlsx", ".xlsm"}:
         return "xlsx"
+    if suffix == ".docx":
+        return "docx"
     if _TEXT.supports(path):
         return "text"
     return None
@@ -512,6 +514,140 @@ def _redact_xlsx_file(
     return total
 
 
+def _redact_paragraphs(
+    paragraphs: object,
+    *,
+    registry: RecognizerRegistry,
+    config: Config,
+    rel_path: str,
+    context_key: str,
+) -> int:
+    total = 0
+    for paragraph in paragraphs:  # type: ignore[attr-defined]
+        text = paragraph.text or ""
+        if not text.strip():
+            continue
+        redacted, n = redact_plain_text(
+            text,
+            registry=registry,
+            config=config,
+            rel_path=rel_path,
+            context_key=context_key,
+        )
+        if n:
+            paragraph.text = redacted
+            total += n
+    return total
+
+
+def _redact_docx_tables(
+    tables: object,
+    *,
+    registry: RecognizerRegistry,
+    config: Config,
+    rel_path: str,
+    context_prefix: str,
+) -> int:
+    """Redact via cell.text; first-row headers become context keys (like xlsx)."""
+    total = 0
+    table_list = list(cast(Any, tables))
+    for table_idx, table in enumerate(table_list, start=1):
+        label = f"{context_prefix}:table{table_idx}" if context_prefix else f"table{table_idx}"
+        headers: dict[int, str] = {}
+        for row_idx, row in enumerate(table.rows):
+            # Dedupe only within a row: horizontally merged cells repeat the same tc.
+            # Do NOT keep a table-wide seen set — python-docx may recycle cell wrappers.
+            seen_row: set[int] = set()
+            for col_idx, cell in enumerate(row.cells):
+                cell_id = id(cell._tc)  # noqa: SLF001 - oxml tc element
+                if cell_id in seen_row:
+                    continue
+                seen_row.add(cell_id)
+                raw = cell.text or ""
+                if not raw.strip():
+                    continue
+                if row_idx == 0:
+                    headers[col_idx] = raw.strip()
+                context = headers.get(col_idx) or label
+                redacted, n = redact_plain_text(
+                    raw,
+                    registry=registry,
+                    config=config,
+                    rel_path=rel_path,
+                    context_key=context,
+                )
+                if n:
+                    cell.text = redacted
+                    total += n
+    return total
+
+
+def _redact_docx_file(
+    path: Path,
+    dest: Path,
+    *,
+    registry: RecognizerRegistry,
+    config: Config,
+    rel_path: str,
+) -> int:
+    """Rewrite paragraph/table/header/footer text into a new .docx under ``dest``."""
+    try:
+        from docx import Document
+        from docx.opc.exceptions import PackageNotFoundError
+    except ImportError as exc:
+        raise RedactError(
+            'Word redact requires piilint[office]. Install with: pip install "piilint[office]"'
+        ) from exc
+
+    try:
+        document = Document(str(path))
+    except (OSError, PackageNotFoundError, ValueError, KeyError) as exc:
+        raise RedactError(f"Invalid document {rel_path}: {exc}") from exc
+
+    total = 0
+    total += _redact_paragraphs(
+        document.paragraphs,
+        registry=registry,
+        config=config,
+        rel_path=rel_path,
+        context_key="body",
+    )
+    total += _redact_docx_tables(
+        document.tables,
+        registry=registry,
+        config=config,
+        rel_path=rel_path,
+        context_prefix="",
+    )
+    for section_idx, section in enumerate(document.sections, start=1):
+        for part_name, container in (
+            ("header", section.header),
+            ("footer", section.footer),
+        ):
+            context = f"section{section_idx}:{part_name}"
+            total += _redact_paragraphs(
+                container.paragraphs,
+                registry=registry,
+                config=config,
+                rel_path=rel_path,
+                context_key=context,
+            )
+            total += _redact_docx_tables(
+                container.tables,
+                registry=registry,
+                config=config,
+                rel_path=rel_path,
+                context_prefix=context,
+            )
+
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        document.save(str(dest))
+    except OSError as exc:
+        raise RedactError(f"Failed to write document {rel_path}: {exc}") from exc
+    return total
+
+
 def _safe_out_path(out_root: Path, rel: str) -> Path:
     """Resolve destination under out_root; refuse escapes."""
     # Normalize rel to forbid absolute / drive / .. escape
@@ -585,6 +721,10 @@ def redact_tree(
                 )
             elif kind == "xlsx":
                 n = _redact_xlsx_file(
+                    file_path, dest, registry=registry, config=config, rel_path=rel
+                )
+            elif kind == "docx":
+                n = _redact_docx_file(
                     file_path, dest, registry=registry, config=config, rel_path=rel
                 )
             else:

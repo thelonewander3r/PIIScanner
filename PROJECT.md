@@ -17,19 +17,20 @@ owner: Product Owner
 
 `piilint` **0.1.0** is on PyPI. Sprints 9–12 on `main` (redact, policy packs, `piilint[office]` xlsx/PDF, locales).
 
-**Next (Emanuel 2026-08-12):** Sprint 13 — **docx** scan (+ redact stretch) under `piilint[office]`.  
+**In progress (Emanuel 2026-08-12):** Sprint 13 — **docx** scan (+ redact stretch) under `piilint[office]` ([#29](https://github.com/thelonewander3r/PIIScanner/issues/29)).  
 **Hold:** no `v0.2.0` / prod `v*` tags without Emanuel’s explicit go.
 
 **Queued after (strategic):** paid team / findings-metadata layer design — say if you want that instead of more formats.
 
 ---
 
-## Sprint 13 — docx adapters (NEXT)
+## Sprint 13 — docx adapters (IN PROGRESS)
 
 **Goal:** Cover Word docs the same way we cover Excel — scan (and where practical, redact) `.docx` via the existing optional office extra, without OCR or bloating the base wheel.
 
-**Tracking:** issue to be opened by Lead Dev from this scope call  
-**Branch:** off `main` → PR → LGTM → PO merge  
+**Tracking:** [#29](https://github.com/thelonewander3r/PIIScanner/issues/29)
+**Branch:** `feature/sprint13-docx` → PR → LGTM → PO merge
+**Verify:** Local Tester (Windows local gate) — **no GHA** (Actions out of minutes).
 **Version:** land on `main` only; **no tag** unless Emanuel goes.
 
 ### In scope
@@ -53,7 +54,7 @@ owner: Product Owner
 
 - [ ] With `piilint[office]`, scan finds PII in synthetic `.docx`
 - [ ] Base install unchanged; skip message clear without office
-- [ ] Tests + CI green (incl. package-smoke without office)
+- [ ] Tests + Local Tester green (incl. package-smoke without office; no GHA)
 - [ ] README updated; Lead Dev LGTM; PO merge
 - [ ] Redact docx shipped or explicitly deferred in PR body
 
