@@ -28,4 +28,4 @@ First public release. **Not on PyPI until** maintainer go â†’ `git tag v0.1.0` â
 
 - Optional NER is available as `piilint[ner]` (not pulled by the base install).
 - Package name is `piilint` (`piiscan` was taken on PyPI).
-- Replace `TBD (tag day)` with the real UTC date when cutting `v0.1.0`.
+
