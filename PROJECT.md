@@ -15,55 +15,30 @@ owner: Product Owner
 
 ## Status
 
-`piilint` **0.1.0** is on PyPI. Sprint 9 (`redact` + policy packs) done on `main` ([#20](https://github.com/thelonewander3r/PIIScanner/issues/20) / [#21](https://github.com/thelonewander3r/PIIScanner/pull/21)).
+`piilint` **0.1.0** is on PyPI. Sprint 9 (text/JSON/CSV redact + policy packs) and **Sprint 10** (notebook + parquet redact) are on `main` ([#22](https://github.com/thelonewander3r/PIIScanner/issues/22) / [#23](https://github.com/thelonewander3r/PIIScanner/pull/23)).
 
-**Next:** Sprint 10 in progress ([#22](https://github.com/thelonewander3r/PIIScanner/issues/22)) ? notebook + parquet redact.  
-**Hold:** no `v0.2.0` (or other prod `v*` tags) without Emanuel?s explicit go.
-
----
-
-
-## Sprint 10 ? Notebook + Parquet redact (IN PROGRESS)
-
-**Goal:** Extend `piilint redact` so `.ipynb` (incl. output cells) and `.parquet` get cleaned copies like text/JSON/CSV.
-
-**Tracking:** [Issue #22](https://github.com/thelonewander3r/PIIScanner/issues/22) ? branch `feature/sprint10-notebook-parquet-redact`  
-**Version:** land on `main` only; **do not** cut `v0.2.0` unless Emanuel goes.
-
-### In scope
-
-1. Notebooks ? source + outputs; nbformat-compatible copy under `-o`
-2. Parquet ? string / dictionary-string columns; document nested limits
-3. Same policy/mask path; no in-place; no new base deps
-4. Tests + README ?supported today?
-
-### Acceptance
-
-- [ ] Cleaned `.ipynb` + `.parquet` copies; sources untouched
-- [ ] Notebook **outputs** covered
-- [ ] Tests / CI / ruff / mypy green
-- [ ] README updated
-- [ ] Lead Dev LGTM; PO merge
+**Hold:** no `v0.2.0` (or other prod `v*` tags) without Emanuel’s explicit go.
 
 ---
 
-## Sprint 9 — Redact + example policy packs (DONE)
+## Sprint 10 — Notebook + Parquet redact (DONE)
 
-**Merged:** [PR #21](https://github.com/thelonewander3r/PIIScanner/pull/21) · closes [#20](https://github.com/thelonewander3r/PIIScanner/issues/20)
+**Merged:** [PR #23](https://github.com/thelonewander3r/PIIScanner/pull/23) · closes [#22](https://github.com/thelonewander3r/PIIScanner/issues/22)
 
 ### Shipped
 
-- `piilint redact PATH -o OUT_DIR` — cleaned **copies** only (no in-place v1); text + json/jsonl + csv/tsv; base wheel, no new deps
-- `examples/policies/` — `strict-ci`, `data-eng`, `open-source-lib` + README (no compliance claims); linked from main README
-- Notebooks/parquet redact left as follow-up
+- `piilint redact` writes cleaned `.ipynb` copies (source + outputs; binary/image payloads left alone)
+- Cleaned `.parquet` for string / large_string / dictionary-string columns via existing pyarrow; nested/non-string left as-is (documented)
+- README supported-formats updated; still no in-place; still no new deps
 
-### Follow-ups (not blocking)
+---
 
-- Redact for notebooks / parquet
-- Ask Emanuel whether to cut `v0.2.0` for this work
+## Sprint 9 — DONE (summary)
+
+`piilint redact` for text/JSON/CSV + `examples/policies/` — [#21](https://github.com/thelonewander3r/PIIScanner/pull/21).
 
 ---
 
 ## Later backlog
 
-Team metadata history (paid wedge), xlsx/PDF, locales, IDE/PR UX, signed releases narrative; notebook/parquet redact.
+Team metadata history (paid wedge), xlsx/PDF, locales, IDE/PR UX, signed releases narrative.
