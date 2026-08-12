@@ -7,9 +7,7 @@ owner: Product Owner
 
 # piilint — Project management
 
-Living PO doc for **scope**, **requirements**, and **sprints**. Technical build detail stays in [`BUILD_PLAN.md`](./BUILD_PLAN.md).
-
-**One-liner:** Find PII in the files developers actually commit and send — notebooks, CSV, JSON, Parquet, and source code. Everything stays local.
+Living PO doc for **scope**, **requirements**, and **sprints**. Technical detail: [`BUILD_PLAN.md`](./BUILD_PLAN.md).
 
 **GitHub:** https://github.com/thelonewander3r/PIIScanner  
 **Local:** `C:\Users\E_man\Documents\Projects\PIIScanner2`
@@ -18,72 +16,61 @@ Living PO doc for **scope**, **requirements**, and **sprints**. Technical build 
 
 ## Status
 
-Phases **0–6 + 8** are done on `main`. Next ordered by Emanuel (2026-08-11):
+All BUILD_PLAN phases **0–8** are on `main` (including optional NER). Next: **first PyPI release** — prep only until Emanuel’s explicit go to cut a `v*` tag.
 
-1. **Sprint 6 — Phase 7 optional NER** (now)
-2. **First PyPI / `v*` release** (after NER; still needs explicit go + trusted publisher)
-
-| Phase | Theme | Status |
-|---|---|---|
-| 0–6, 8 | MVP + launch collateral | Done |
-| 7 | Optional NER | **Done (Sprint 6)** — [issue #12](https://github.com/thelonewander3r/PIIScanner/issues/12) |
-| — | First PyPI publish | Queued after Sprint 6 |
+| Area | Status |
+|---|---|
+| Phases 0–6, 8 | Done |
+| Phase 7 NER | Done — [#12](https://github.com/thelonewander3r/PIIScanner/issues/12) / [#13](https://github.com/thelonewander3r/PIIScanner/pull/13) |
+| First PyPI / `v0.1.0` | **Next (Sprint 7)** — no tag without Emanuel go |
 
 ---
 
-## Sprint 6 — Optional NER (DONE)
+## Sprint 7 — First PyPI release (NEXT)
 
-**Goal:** Add PERSON/ADDRESS detection as a heavy optional extra without bloating the base install or breaking the no-scan-time-network promise.
+**Goal:** Make `piilint` installable via PyPI (`pipx`/`uvx`/`pip`) with a clean 0.1.0 release, without surprising publishes.
 
-**Source:** `BUILD_PLAN.md` locked NER decision + Phase 7 + entity table  
-**Tracking:** [Issue #12](https://github.com/thelonewander3r/PIIScanner/issues/12)
+**Tracking:** GitHub issue to be opened by Lead Dev from this scope call  
+**Hard rule:** Do **not** push a `v*` tag or publish until Emanuel explicitly says go.
 
 ### In scope
 
-1. **Optional extra** — populate `piilint[ner]` in `pyproject.toml` with `presidio-analyzer` + spaCy (versions pinned/compatible with Python 3.10–3.13); base install stays lean (`ner = []` today)
-2. **`piilint setup-ner`** — explicit command to fetch/install the English model; **only** allowed network path besides CI/release; clear errors if model missing when `--ner` is used
-3. **Recognizer** — PERSON + ADDRESS via Presidio/spaCy; default **off**; require both `[ner]` extra **and** `--ner` (and/or config toggle) to emit
-4. **Severity / confidence** — default medium; integrate with existing policy (allowlists, min_confidence, fail-on, baseline fingerprints)
-5. **Chassis rules** — keep adapters/findings/baseline/reporters free of recognizer imports; NER lives under `recognizers/`
-6. **Corpus + tests** — synthetic NER true positives in prose (per BUILD_PLAN corpus note); hard negatives stay clean; benchmark gates must not regress for core entities; document NER metrics separately if not in the core recall gate
-7. **Docs** — README: install `[ner]`, `setup-ner`, `--ner` examples; disclaimer unchanged; mark Phase 7 done in `BUILD_PLAN.md` when AC met
-8. **Windows-first** — setup and scan path work on Windows 11
+1. **Version / metadata** — confirm `pyproject.toml` version `0.1.0` (or agreed), name `piilint`, classifiers, entry points, `project.urls`, optional `[ner]` extra documented
+2. **Trusted publishing checklist** — document/verify GitHub `pypi` environment + PyPI trusted publisher for `thelonewander3r/PIIScanner` → `release.yml` OIDC job (Emanuel may need to click through PyPI/GitHub UI)
+3. **Release dry-run** — `uv build` locally; sanity-check sdist/wheel contents (no secrets, corpus note OK); optional TestPyPI dry-run if Emanuel wants
+4. **CHANGELOG** — move Unreleased notes into `0.1.0` section dated for release day
+5. **README** — install from PyPI as primary path; keep git/dev install secondary
+6. **Release PR** — version bump + changelog/README only; CI green; **tag is a separate, explicit step** after merge + Emanuel go
+7. **Post-go runbook** (for PO/Emanuel): `git tag v0.1.0 && git push origin v0.1.0` → watch `release.yml` → verify PyPI + `uvx piilint --version`
 
-### Out of scope (Sprint 6)
+### Out of scope
 
-- Non-English NER models
-- PyPI / `v*` tag (next package after this)
-- `--redact` / anonymizer
-- Turning NER on by default
+- Cutting the tag in this sprint without Emanuel’s go
+- Marketplace listing / SEO deep dive
+- New features
 
 ### Acceptance
 
-- [x] `pip`/`uv` install without `[ner]` does not pull Presidio/spaCy
-- [x] `piilint[ner]` + `setup-ner` enables `--ner` scans for PERSON/ADDRESS
-- [x] Without setup/model, `--ner` fails clearly (exit 2), not silently
-- [x] Default scans (no `--ner`) unchanged vs current MVP
-- [x] pytest + core benchmark gates still hold with real numbers; ruff/mypy clean
-- [x] No scan-time network except inside `setup-ner`
-- [ ] Lead Dev review; PO merge
+- [ ] Release prep PR merged (version + changelog + docs)
+- [ ] Trusted publisher / `pypi` env ready or blocked with a clear Emanuel checklist
+- [ ] Local `uv build` succeeds; CI green on the prep PR
+- [ ] Written runbook for the tag step
+- [ ] Lead Dev review on prep PR
+- [ ] Tag/publish only after Emanuel’s explicit go
 
 ### Roles
 
-- **Developer:** feature branch off `main`; report AC + numbers on the issue
-- **Lead Developer:** open issue, architecture review
-- **Product Owner:** this scope; cleanup/PR; then scope PyPI release package
-
----
-
-## Queued after Sprint 6 — First PyPI release
-
-Prep trusted publisher + `pypi` environment, confirm 0.1.0 metadata, dry-run build, then cut `v*` **only** on Emanuel’s explicit go. No publish work starts until NER merges (unless he reorders).
+- **Developer:** prep PR (version/changelog/docs); help verify build
+- **Lead Developer:** open issue, review prep PR, advise on publisher setup
+- **Product Owner:** this scope; merge prep; **stop before tag** until Emanuel go
+- **Emanuel:** PyPI/GitHub publisher UI; explicit go to tag
 
 ---
 
 ## How we work
 
-1. Product Owner owns scope (this file)
-2. Lead Dev ↔ Developer via GitHub issues + DMs
-3. Developer implements on a feature branch
-4. Lead Dev reviews
-5. Product Owner merges, then scopes next package
+1. Product Owner owns scope  
+2. Lead Dev ↔ Developer via issues + DMs  
+3. Developer on feature branch  
+4. Lead Dev reviews  
+5. Product Owner merges, then next package (here: wait for go to tag)
