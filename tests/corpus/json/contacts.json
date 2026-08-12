@@ -1,0 +1,12 @@
+{
+  "contacts": [
+    {
+      "name": "synth-a",
+      "phone": "+1 212-735-0182"
+    },
+    {
+      "name": "synth-b",
+      "phone": "+14159032741"
+    }
+  ]
+}

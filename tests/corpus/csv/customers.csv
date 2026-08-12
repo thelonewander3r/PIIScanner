@@ -1,0 +1,4 @@
+id,email,ssn
+1,customer.alpha@retailmail.test,234-56-7890
+2,ops.beta@corpmail.test,512-48-3017
+3,not-an-email,000-12-3456

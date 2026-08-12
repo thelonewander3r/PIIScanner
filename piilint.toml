@@ -1,0 +1,18 @@
+# Example piilint configuration (Phase 3).
+# Precedence: CLI flags > this file (at scan root) > [tool.piilint] in pyproject.toml > defaults.
+
+[scan]
+fail_on = "high"            # high | medium | low | never
+min_confidence = 0.6
+# exclude = ["tests/fixtures/**"]
+
+[entities]
+ip_address = false
+
+# Per-entity severity override example:
+# [entities.email]
+# severity = "medium"
+
+[allowlist]
+values = []
+domains = []

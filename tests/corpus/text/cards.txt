@@ -1,0 +1,3 @@
+payment sandbox (synthetic valid-Luhn, not real cards)
+card 4532015112830366
+pan: 4556737586899855

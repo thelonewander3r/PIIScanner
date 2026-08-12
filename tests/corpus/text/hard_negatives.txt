@@ -1,0 +1,15 @@
+# should produce ZERO findings at default settings
+uuid: 550e8400-e29b-41d4-a716-446655440000
+git_sha: a1b2c3d4e5f6789012345678abcdef0123456789
+timestamp: 2026-08-11T15:04:05Z
+semver: 1.2.3
+version_ip_like: 1.2.3.4
+order_id: ORD-99-ABCDEFGH
+fail_luhn_card: 4532015112830367
+ein: 12-3456789
+invalid_ssn_area: 000-12-3456
+invalid_ssn_666: 666-12-3456
+invalid_ssn_9xx: 900-12-3456
+base64: SGVsbG8gV29ybGQhIE5vdCBQSukk
+integrity: sha512-AbCdEfGhIjKlMnOpQrStUvWxYz0123456789+/==
+lockhash: 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08

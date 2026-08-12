@@ -1,0 +1,77 @@
+# Synthetic labeled corpus manifest — 100% generated data, never real PII.
+# Paths are relative to tests/corpus/
+# Tabular adapters emit ONE aggregated finding per (file, column, entity).
+version: 1
+cases:
+  - path: text/emails.py
+    adapter: text
+    expected:
+      - entity: EMAIL
+        count: 2
+        location_hints: ["line"]
+
+  - path: text/phones.txt
+    adapter: text
+    expected:
+      - entity: PHONE
+        count: 2
+
+  - path: text/ssn.txt
+    adapter: text
+    expected:
+      - entity: SSN_US
+        count: 2
+
+  - path: text/cards.txt
+    adapter: text
+    expected:
+      - entity: CREDIT_CARD
+        count: 2
+
+  - path: text/iban.txt
+    adapter: text
+    expected:
+      - entity: IBAN
+        count: 2
+
+  - path: text/hard_negatives.txt
+    adapter: text
+    expected: []
+
+  - path: csv/customers.csv
+    adapter: csv
+    expected:
+      - entity: EMAIL
+        count: 1
+        location_hints: ["column email"]
+      - entity: SSN_US
+        count: 1
+        location_hints: ["column ssn"]
+
+  - path: json/contacts.json
+    adapter: json
+    expected:
+      - entity: PHONE
+        count: 1
+        location_hints: ["column phone"]
+
+  - path: json/events.jsonl
+    adapter: json
+    expected:
+      - entity: EMAIL
+        count: 1
+        location_hints: ["column email"]
+
+  - path: parquet/users.parquet
+    adapter: parquet
+    expected:
+      - entity: DOB
+        count: 1
+        location_hints: ["column dob"]
+
+  - path: notebook/leak_demo.ipynb
+    adapter: notebook
+    expected:
+      - entity: CREDIT_CARD
+        count: 2
+        location_hints: ["output"]
