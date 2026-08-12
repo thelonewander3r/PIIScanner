@@ -48,9 +48,7 @@ def _rules_for(findings: list[Finding]) -> list[dict[str, Any]]:
                 "id": _rule_id(entity),
                 "name": entity.value,
                 "shortDescription": {"text": f"Detect {entity.value}"},
-                "fullDescription": {
-                    "text": _ENTITY_HELP.get(entity, f"Detect {entity.value}")
-                },
+                "fullDescription": {"text": _ENTITY_HELP.get(entity, f"Detect {entity.value}")},
                 "defaultConfiguration": {"level": default_level},
             }
         )

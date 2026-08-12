@@ -80,7 +80,7 @@ Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
 | 3 | Policy & noise | Done — [issue #1](https://github.com/thelonewander3r/PIIScanner/issues/1) / [PR #2](https://github.com/thelonewander3r/PIIScanner/pull/2) |
 | 4 | Baseline + staged mode | Done — [issue #3](https://github.com/thelonewander3r/PIIScanner/issues/3) / [PR #4](https://github.com/thelonewander3r/PIIScanner/pull/4) |
 | 5 | Reporters & DX polish | Done — [issue #5](https://github.com/thelonewander3r/PIIScanner/issues/5) / [PR #6](https://github.com/thelonewander3r/PIIScanner/pull/6) |
-| 6 | Distribution | **In progress (Sprint 4)** — [issue #7](https://github.com/thelonewander3r/PIIScanner/issues/7); blocked on PAT `workflow` scope for workflow YAML |
+| 6 | Distribution | **Implemented on branch** — [issue #7](https://github.com/thelonewander3r/PIIScanner/issues/7); workflows ready locally; push of `.github/workflows/*.yml` still blocked until PAT has `workflow` scope |
 | 7 | Optional NER | After launch OK |
 | 8 | Launch collateral | Not started |
 
@@ -94,46 +94,48 @@ Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
 
 ---
 
-## Sprint 4 — Distribution (IN PROGRESS)
+## Sprint 4 — Distribution (IMPLEMENTATION COMPLETE — MERGE PENDING)
 
 **Goal:** Make `piilint` installable and wireable in 5 minutes — PyPI, pre-commit, GitHub Action, and green CI/release automation.
 
 **Source:** `BUILD_PLAN.md` locked decisions (CI matrix, PyPI OIDC, repo layout) + Phase 6  
 **Tracking:** [Issue #7](https://github.com/thelonewander3r/PIIScanner/issues/7)  
-**Hard blocker:** GitHub PAT must include `workflow` scope before `.github/workflows/*.yml` can be pushed. Emanuel owns unblocking.
+**Branch:** `feature/phase6-distribution`  
+**Hard blocker (push):** GitHub PAT must include `workflow` scope before `.github/workflows/*.yml` can be pushed. Emanuel owns unblocking. Non-workflow files (`action.yml`, `.pre-commit-hooks.yaml`, README, pyproject urls, docs) are ready regardless.
 
-### In scope
+### Delivered on branch
 
-1. **CI workflow** — land `.github/workflows/ci.yml`: `{ubuntu, windows, macos} × {3.10, 3.13}` running ruff, mypy, pytest, benchmark gate (draft may already exist locally under `.github/workflows/ci.yml`)
-2. **Release workflow** — `.github/workflows/release.yml` with PyPI **trusted publishing (OIDC)** on tag/release; no long-lived PyPI token in secrets if avoidable
-3. **Pre-commit hook** — `.pre-commit-hooks.yaml` exposing a hook that runs `piilint` (prefer `--staged`); document `.pre-commit-config.yaml` snippet in README
-4. **GitHub Action** — root `action.yml` composite action wrapping the CLI for PR/CI use (SARIF upload optional/documented, not required inside the action)
-5. **Packaging polish** — confirm `pyproject.toml` / hatchling metadata ready for PyPI (`piilint` name, classifiers, entry point); README install via `pipx` / `uvx` / `pip`
-6. **Docs** — README: install, pre-commit, Action usage, CI badge once workflows are on `main`; mark Phase 6 done in `BUILD_PLAN.md` when AC met
+1. **CI workflow** — `.github/workflows/ci.yml`: `{ubuntu, windows, macos} × {3.10, 3.13}` — ruff check/format, mypy, pytest+benchmark, version smoke (`uv sync --extra dev`)
+2. **Release workflow** — `.github/workflows/release.yml` with PyPI OIDC trusted publishing (`pypa/gh-action-pypi-publish`, environment `pypi`); no long-lived token; no tag cut in this sprint
+3. **Pre-commit hook** — `.pre-commit-hooks.yaml` (`piilint --staged --fail-on medium`); README consumer snippet
+4. **GitHub Action** — root `action.yml` composite; SARIF write + upload documented as caller’s job
+5. **Packaging polish** — `project.urls` → `thelonewander3r/PIIScanner`; README pipx/uvx/pip; hatchling build smoke
+6. **Docs** — BUILD_PLAN Phase 6 DONE; this board updated; PyPI trusted-publisher checklist in README
 
-### Out of scope (Sprint 4)
+### Out of scope (Sprint 4) — unchanged
 
-- Actually publishing the **first** PyPI release to production without Emanuel’s explicit go (prepare workflows + dry-run; cut the tag only when he says)
-- GitHub Marketplace listing copy / screenshots (Phase 8 launch collateral)
-- NER extra (Phase 7)
+- First production PyPI publish / release tag without Emanuel’s explicit go
+- Marketplace / launch copy (Phase 8)
+- NER (Phase 7)
 - New runtime dependencies
 
-### Acceptance (Sprint 4 done when)
+### Acceptance (Sprint 4)
 
-- [ ] `ci.yml` on `main` and green on the matrix (or documented waiver if a platform flake is filed)
-- [ ] `release.yml` present with OIDC trusted publishing configured (PyPI project / environment ready or checklist for Emanuel)
-- [ ] `.pre-commit-hooks.yaml` works in a smoke test; README snippet correct
-- [ ] `action.yml` runnable from a workflow; documented inputs/outputs
-- [ ] Package metadata consistent with public `piilint` name
+- [x] `ci.yml` prepared on feature branch (green on matrix once workflows can run on GitHub)
+- [x] `release.yml` present with OIDC trusted publishing + README checklist for Emanuel’s PyPI/environment setup
+- [x] `.pre-commit-hooks.yaml` smoke-tested (YAML parse / hook fields); README snippet correct
+- [x] `action.yml` documented (inputs/outputs); SARIF upload left to caller
+- [x] Package metadata consistent with public `piilint` name + corrected GitHub URLs
 - [ ] Lead Developer review approved
-- [ ] PO cleanup; PR to `main`
+- [ ] PO cleanup; PR to `main` (may need two-step push if PAT still lacks `workflow`)
+- [ ] Remote CI green on `main` (blocked on workflow push until PAT has `workflow` scope)
 
 ### Roles
 
-- **Emanuel:** add PAT `workflow` scope (blocker); approve first real PyPI publish
-- **Developer:** implement on a feature branch off `main`; report AC on the issue
-- **Lead Developer:** open issue from this scope, review, guidance
-- **Product Owner:** this scope call; cleanup/PR after approval
+- **Emanuel:** add PAT `workflow` scope (blocker); configure PyPI trusted publisher; approve first real PyPI publish
+- **Developer:** implement on `feature/phase6-distribution`; report AC on the issue
+- **Lead Developer:** review / guidance
+- **Product Owner:** cleanup/PR after approval
 
 ---
 
@@ -153,7 +155,7 @@ Technical source of truth: `BUILD_PLAN.md`. Sprint/scope board: this file. Phase
 
 | Blocker | Impact | Owner |
 |---|---|---|
-| GitHub PAT missing `workflow` scope | Cannot push `.github/workflows/ci.yml` or `release.yml`; Sprint 4 partially blocked | Emanuel (re-auth PAT with `workflow`) |
+| GitHub PAT missing `workflow` scope | Cannot push `.github/workflows/ci.yml` or `release.yml` yet; files are prepared on `feature/phase6-distribution` | Emanuel (re-auth PAT with `workflow`) |
 
 ---
 

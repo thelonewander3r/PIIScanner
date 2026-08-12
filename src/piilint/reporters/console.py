@@ -52,9 +52,7 @@ def render_console(
             loc = f.location.label().removeprefix(f"{path} · ").removeprefix(path)
             if not loc:
                 loc = f"line {f.location.line}" if f.location.line else "-"
-            sample = (
-                f.normalized_value if show_matches and f.normalized_value else f.masked_sample
-            )
+            sample = f.normalized_value if show_matches and f.normalized_value else f.masked_sample
             if f.matched_count > 1:
                 summary = f.extras.get("column_summary")
                 if summary:

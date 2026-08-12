@@ -1,0 +1,14 @@
+# Hook definitions for https://pre-commit.com consumers.
+# Install in a consuming repo via .pre-commit-config.yaml (see README).
+
+- id: piilint
+  name: piilint
+  description: >
+    Scan git-staged files for PII with piilint (local-first; no scan-time network).
+    Default fail-on is medium; override via args in your .pre-commit-config.yaml.
+  entry: piilint
+  language: python
+  types: [text]
+  # --staged uses git index; do not pass filenames from pre-commit.
+  pass_filenames: false
+  args: ["--staged", "--fail-on", "medium"]

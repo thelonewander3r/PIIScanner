@@ -1,0 +1,106 @@
+name: piilint
+description: Scan a repository path for PII with piilint (local-first CLI).
+author: Emanuel
+
+branding:
+  icon: shield
+  color: purple
+
+inputs:
+  path:
+    description: Path to scan (file or directory).
+    required: false
+    default: "."
+  fail-on:
+    description: Minimum severity that fails the step (high | medium | low | never). Empty uses config/default.
+    required: false
+    default: ""
+  format:
+    description: Output format — console, json, or sarif.
+    required: false
+    default: "console"
+  baseline:
+    description: Optional path to a piilint baseline JSON (report new findings only).
+    required: false
+    default: ""
+  staged:
+    description: If true, scan only git-staged files (Added/Copied/Modified/Renamed).
+    required: false
+    default: "false"
+  extra-args:
+    description: Extra CLI arguments appended to the piilint invocation (space-separated).
+    required: false
+    default: ""
+  version:
+    description: >
+      PyPI version of piilint to install (e.g. 0.1.0). When empty, install from this
+      action's repository checkout (github.action_path) — preferred for same-repo use
+      before/while the package is on PyPI.
+    required: false
+    default: ""
+  sarif-file:
+    description: Destination path when format=sarif.
+    required: false
+    default: "piilint.sarif"
+  python-version:
+    description: Python version for the composite action runner.
+    required: false
+    default: "3.12"
+
+outputs:
+  sarif-path:
+    description: Path to the written SARIF file when format=sarif; empty otherwise.
+    value: ${{ steps.run.outputs.sarif-path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install piilint
+      shell: bash
+      run: |
+        set -euo pipefail
+        if [ -n "${{ inputs.version }}" ]; then
+          pip install "piilint==${{ inputs.version }}"
+        else
+          pip install "${{ github.action_path }}"
+        fi
+        piilint --version
+
+    - name: Run piilint
+      id: run
+      shell: bash
+      run: |
+        set -euo pipefail
+        args=()
+        if [ -n "${{ inputs.fail-on }}" ]; then
+          args+=(--fail-on "${{ inputs.fail-on }}")
+        fi
+        if [ -n "${{ inputs.baseline }}" ]; then
+          args+=(--baseline "${{ inputs.baseline }}")
+        fi
+        if [ "${{ inputs.staged }}" = "true" ]; then
+          args+=(--staged)
+        fi
+        fmt="${{ inputs.format }}"
+        args+=(--format "$fmt")
+        # shellcheck disable=SC2206
+        extra=(${{ inputs.extra-args }})
+        set +e
+        if [ "$fmt" = "sarif" ]; then
+          out="${{ inputs.sarif-file }}"
+          piilint "${{ inputs.path }}" "${args[@]}" "${extra[@]}" > "$out"
+          rc=$?
+          echo "sarif-path=$out" >> "$GITHUB_OUTPUT"
+          echo "Wrote SARIF to $out"
+          echo "Upload with github/codeql-action/upload-sarif (caller's job — not done by this action)."
+        else
+          echo "sarif-path=" >> "$GITHUB_OUTPUT"
+          piilint "${{ inputs.path }}" "${args[@]}" "${extra[@]}"
+          rc=$?
+        fi
+        exit "$rc"
