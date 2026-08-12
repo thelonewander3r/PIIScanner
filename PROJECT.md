@@ -26,17 +26,17 @@ Phases **0–6 + 8** are done on `main`. Next ordered by Emanuel (2026-08-11):
 | Phase | Theme | Status |
 |---|---|---|
 | 0–6, 8 | MVP + launch collateral | Done |
-| 7 | Optional NER | **Next (Sprint 6)** |
+| 7 | Optional NER | **In progress (Sprint 6)** — [issue #12](https://github.com/thelonewander3r/PIIScanner/issues/12) |
 | — | First PyPI publish | Queued after Sprint 6 |
 
 ---
 
-## Sprint 6 — Optional NER (NEXT)
+## Sprint 6 — Optional NER (IN PROGRESS)
 
 **Goal:** Add PERSON/ADDRESS detection as a heavy optional extra without bloating the base install or breaking the no-scan-time-network promise.
 
 **Source:** `BUILD_PLAN.md` locked NER decision + Phase 7 + entity table  
-**Tracking:** GitHub issue to be opened by Lead Dev from this scope call
+**Tracking:** [Issue #12](https://github.com/thelonewander3r/PIIScanner/issues/12)
 
 ### In scope
 
