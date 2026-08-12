@@ -17,16 +17,16 @@ owner: Product Owner
 
 `piilint` **0.1.0** is on PyPI. Sprint 9–10 redact work is on `main` (text/JSON/CSV/notebook/parquet + policy packs).
 
-**Next (Emanuel 2026-08-12):** Sprint 11 — **xlsx + PDF** adapters (formats teams actually ship).  
+**Next (Emanuel 2026-08-12):** Sprint 11 in progress ([#24](https://github.com/thelonewander3r/PIIScanner/issues/24)) — xlsx + PDF via `piilint[office]`.  
 **Hold:** no `v0.2.0` / prod `v*` tags without Emanuel’s explicit go.
 
 ---
 
-## Sprint 11 — xlsx + PDF adapters (NEXT)
+## Sprint 11 — xlsx + PDF adapters (IN PROGRESS)
 
 **Goal:** Scan (and where practical, redact) the Office/PDF files data and ops teams actually pass around — without bloating the default install or adding OCR complexity.
 
-**Tracking:** issue to be opened by Lead Dev from this scope call  
+**Tracking:** [Issue #24](https://github.com/thelonewander3r/PIIScanner/issues/24) · `piilint[office]` = openpyxl + pypdf  
 **Branch:** off `main` → PR → LGTM → PO merge  
 **Version:** land on `main` only; **no tag** unless Emanuel goes.
 
