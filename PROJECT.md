@@ -50,8 +50,8 @@ Disclaimer: *piilint helps you find sensitive data before it leaks. It is a dete
 | 4 | Baseline + staged | Done — [#3](https://github.com/thelonewander3r/PIIScanner/issues/3) / [#4](https://github.com/thelonewander3r/PIIScanner/pull/4) |
 | 5 | Reporters & DX | Done — [#5](https://github.com/thelonewander3r/PIIScanner/issues/5) / [#6](https://github.com/thelonewander3r/PIIScanner/pull/6) |
 | 6 | Distribution | **Done** — [#7](https://github.com/thelonewander3r/PIIScanner/issues/7) / [#8](https://github.com/thelonewander3r/PIIScanner/pull/8) + [#9](https://github.com/thelonewander3r/PIIScanner/pull/9) |
-| 7 | Optional NER | After launch OK |
-| 8 | Launch collateral | **In progress (Sprint 5)** — [issue #10](https://github.com/thelonewander3r/PIIScanner/issues/10) |
+| 7 | Optional NER | Post-launch — **NOT STARTED** |
+| 8 | Launch collateral | **Done (Sprint 5)** — [issue #10](https://github.com/thelonewander3r/PIIScanner/issues/10) |
 
 ---
 
@@ -63,12 +63,13 @@ Disclaimer: *piilint helps you find sensitive data before it leaks. It is a dete
 
 ---
 
-## Sprint 5 — Launch collateral (IN PROGRESS)
+## Sprint 5 — Launch collateral (COMPLETE locally — pending review/merge)
 
 **Goal:** Make the public repo look launch-ready so first adopters succeed in five minutes.
 
 **Source:** `BUILD_PLAN.md` Phase 8  
-**Tracking:** [Issue #10](https://github.com/thelonewander3r/PIIScanner/issues/10)
+**Tracking:** [Issue #10](https://github.com/thelonewander3r/PIIScanner/issues/10)  
+**Branch:** `feature/phase8-launch`
 
 ### In scope
 
@@ -87,10 +88,12 @@ Disclaimer: *piilint helps you find sensitive data before it leaks. It is a dete
 
 ### Acceptance
 
-- [ ] README is a complete five-minute path (install → scan → pre-commit/Action)
-- [ ] CI badge works; disclaimer + pairing guidance present
-- [ ] CONTRIBUTING + SECURITY present and accurate
-- [ ] CHANGELOG stub ready for 0.1.0
+- [x] README is a complete five-minute path (install → scan → pre-commit/Action)
+- [x] CI badge works; disclaimer + pairing guidance present
+- [x] CONTRIBUTING + SECURITY present and accurate
+- [x] CHANGELOG stub ready for 0.1.0
+- [x] Demo/example is synthetic-only (`examples/README.md` → corpus notebook)
+- [x] `uv run pytest` / ruff / mypy still green (verified locally)
 - [ ] Lead Dev review; PO merge
 
 ### Roles
