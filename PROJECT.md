@@ -73,11 +73,11 @@ Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
 
 | Phase | Theme | Status (as of 2026-08-11) |
 |---|---|---|
-| 0 | Bootstrap | Done (on `main`) |
+| 0 | Bootstrap | Done |
 | 1 | Corpus + engine core | Done |
 | 2 | Tabular + notebook adapters | Done |
-| 3 | Policy & noise | **Done — Lead Dev approved** ([issue #1](https://github.com/thelonewander3r/PIIScanner/issues/1), branch `feature/phase3-policy`) |
-| 4 | Baseline + staged mode | **Next (Sprint 2)** |
+| 3 | Policy & noise | **Done** — [issue #1](https://github.com/thelonewander3r/PIIScanner/issues/1) closed via [PR #2](https://github.com/thelonewander3r/PIIScanner/pull/2) |
+| 4 | Baseline + staged mode | **Next (Sprint 2)** — issue pending Lead Dev |
 | 5 | Reporters & DX polish | Not started |
 | 6 | Distribution | Not started |
 | 7 | Optional NER | After launch OK |
@@ -87,17 +87,14 @@ Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
 
 ## Sprint 1 — Policy & noise (COMPLETE)
 
-**Goal:** Make findings controllable and quiet enough for real repos.
-
-**Tracking:** [Issue #1](https://github.com/thelonewander3r/PIIScanner/issues/1)  
-**Branch:** `feature/phase3-policy`  
-**Brief:** [`PHASE3_DEV_BRIEF.md`](./PHASE3_DEV_BRIEF.md)
+**Tracking:** [Issue #1](https://github.com/thelonewander3r/PIIScanner/issues/1) (closed)  
+**Merged:** [PR #2](https://github.com/thelonewander3r/PIIScanner/pull/2) → `main`
 
 ### Definition of done
 
 - [x] Phase 3 acceptance checklist met
-- [x] Lead Developer review / approve (47 pytest passed; ruff/mypy clean; benchmark gates hold)
-- [ ] PO cleanup; PR merged to `main`
+- [x] Lead Developer review / approve (47 pytest; ruff/mypy; benchmark gates)
+- [x] PO cleanup; PR merged to `main`
 
 ---
 
@@ -106,7 +103,7 @@ Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
 **Goal:** Teams can adopt without fixing history first, and pre-commit only scans what is about to land.
 
 **Source:** `BUILD_PLAN.md` § Policy (baseline) + Phase 4  
-**Tracking:** GitHub issue to be opened by Lead Dev from this scope call
+**Tracking:** GitHub issue to be opened by Lead Dev from PO scope call
 
 ### In scope
 
@@ -120,7 +117,7 @@ Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
 ### Out of scope (Sprint 2)
 
 - JSON / SARIF reporters (Phase 5)
-- GitHub Action packaging / pre-commit hook publish (Phase 6 — may *use* `--staged` earlier, but distribution waits)
+- GitHub Action packaging / pre-commit hook publish (Phase 6)
 - NER extra (Phase 7)
 - Changing Phase 3 policy behavior unless a baseline bug forces a tiny fix
 
@@ -136,7 +133,7 @@ Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
 
 ### Roles
 
-- **Developer:** implement on a feature branch off `main` (or off merged Phase 3); report AC + numbers on the issue
+- **Developer:** implement on a feature branch off `main`; report AC + numbers on the issue
 - **Lead Developer:** open issue from this scope, review, guidance
 - **Product Owner:** this scope call; cleanup/PR after approval
 
@@ -158,8 +155,7 @@ Technical source of truth: `BUILD_PLAN.md`. Sprint/scope board: this file. Phase
 
 | Blocker | Impact | Owner |
 |---|---|---|
-| GitHub PAT missing `workflow` scope | `.github/workflows/ci.yml` still untracked locally; CI cannot run on GitHub yet | Emanuel (re-auth PAT with `workflow`) |
-| Sprint 1 PR not yet merged | Phase 3 not on `main` | Product Owner |
+| GitHub PAT missing `workflow` scope | `.github/workflows/ci.yml` still local-only; CI cannot run on GitHub yet | Emanuel (re-auth PAT with `workflow`) |
 
 ---
 
