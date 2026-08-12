@@ -25,141 +25,95 @@ Living PO doc for **scope**, **requirements**, and **sprints**. Technical build 
 
 - Local-first CLI (`piilint`) — no scan-time network
 - File types: text/source, notebooks (incl. outputs), CSV/TSV, JSON/JSONL, Parquet
-- Deterministic recognizers: credit card, SSN (US), IBAN, email, phone, DOB (context-key), IP (off by default)
-- Optional NER (`piilint[ner]`) post-MVP / Phase 7 — not current sprint
-- Policy and noise control (config, ignore, allowlists, suppressions, fail-on)
-- Baseline + staged/pre-commit mode
-- Console + JSON + SARIF reporters
-- Synthetic benchmark corpus with precision/recall CI gates
-- Windows, macOS, Linux; Python 3.10–3.13
-- Distribution: PyPI, pre-commit hook, GitHub Action, CI/release workflows
+- Deterministic recognizers + optional NER post-launch
+- Policy / baseline / staged / reporters (console, JSON, SARIF)
+- Distribution: PyPI, pre-commit, GitHub Action, CI/release workflows
 
 ### Out of scope (v0)
 
-- Secrets scanning (pair with gitleaks / trufflehog)
-- Anonymization / rewrite (`--redact` is post-MVP)
-- Databases, PDF, docx/xlsx, images/OCR
-- Telemetry
-- Non-English NER as default
-- Claiming GDPR / HIPAA / PCI "compliance"
+- Secrets scanning · `--redact` · databases/PDF/Office/OCR · telemetry · compliance claims
 
 ### Product promise
 
 > Before this file reaches GitHub, an LLM, a vendor, or a fixture directory — tell me if it contains PII, without uploading my data anywhere.
 
-Disclaimer (required in all user-facing docs): *piilint helps you find sensitive data before it leaks. It is a detection aid, not a compliance certification, and cannot guarantee that all sensitive data is found.*
-
----
-
-## Requirements (must-have for MVP)
-
-| ID | Requirement | Notes |
-|---|---|---|
-| R1 | Zero scan-time network | Enforced by pytest-socket |
-| R2 | Redaction by default | No raw PII in outputs, logs, or snapshots |
-| R3 | Deterministic output | Same input → byte-identical results; stable sort |
-| R4 | Exit codes are public API | `0` clean / below threshold · `1` findings ≥ fail-on · `2` config/usage error |
-| R5 | Precision over recall | High-severity precision ≥ 0.95; core recall ≥ 0.85 (CI gate) |
-| R6 | Windows first-class | pathlib, UTF-8 replace, BOM/CRLF |
-| R7 | Chassis boundary | adapters / findings / baseline / reporters do not import recognizers |
-| R8 | Small locked dependency set | Ask before adding deps |
-| R9 | Config precedence | CLI > `piilint.toml` > `[tool.piilint]` > defaults |
-| R10 | Noise controls | `.piiignore`, inline suppressions, allowlists, test-data downweight, baseline |
-
-Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
+Disclaimer: *piilint helps you find sensitive data before it leaks. It is a detection aid, not a compliance certification, and cannot guarantee that all sensitive data is found.*
 
 ---
 
 ## Phase map → sprints
 
-| Phase | Theme | Status (as of 2026-08-11) |
+| Phase | Theme | Status |
 |---|---|---|
-| 0 | Bootstrap | Done |
-| 1 | Corpus + engine core | Done |
-| 2 | Tabular + notebook adapters | Done |
-| 3 | Policy & noise | Done — [issue #1](https://github.com/thelonewander3r/PIIScanner/issues/1) / [PR #2](https://github.com/thelonewander3r/PIIScanner/pull/2) |
-| 4 | Baseline + staged mode | Done — [issue #3](https://github.com/thelonewander3r/PIIScanner/issues/3) / [PR #4](https://github.com/thelonewander3r/PIIScanner/pull/4) |
-| 5 | Reporters & DX polish | Done — [issue #5](https://github.com/thelonewander3r/PIIScanner/issues/5) / [PR #6](https://github.com/thelonewander3r/PIIScanner/pull/6) |
-| 6 | Distribution | **Implemented on branch** — [issue #7](https://github.com/thelonewander3r/PIIScanner/issues/7); workflows ready locally; push of `.github/workflows/*.yml` still blocked until PAT has `workflow` scope |
+| 0–2 | Bootstrap → adapters | Done |
+| 3 | Policy & noise | Done — [#1](https://github.com/thelonewander3r/PIIScanner/issues/1) / [#2](https://github.com/thelonewander3r/PIIScanner/pull/2) |
+| 4 | Baseline + staged | Done — [#3](https://github.com/thelonewander3r/PIIScanner/issues/3) / [#4](https://github.com/thelonewander3r/PIIScanner/pull/4) |
+| 5 | Reporters & DX | Done — [#5](https://github.com/thelonewander3r/PIIScanner/issues/5) / [#6](https://github.com/thelonewander3r/PIIScanner/pull/6) |
+| 6 | Distribution | **Done** — [#7](https://github.com/thelonewander3r/PIIScanner/issues/7) / [#8](https://github.com/thelonewander3r/PIIScanner/pull/8) + [#9](https://github.com/thelonewander3r/PIIScanner/pull/9) |
 | 7 | Optional NER | After launch OK |
-| 8 | Launch collateral | Not started |
+| 8 | Launch collateral | **Next (Sprint 5)** |
 
 ---
 
-## Sprint 3 — Reporters & DX (COMPLETE)
+## Sprint 4 — Distribution (COMPLETE)
 
-**Tracking:** [Issue #5](https://github.com/thelonewander3r/PIIScanner/issues/5) (closed)  
-**Merged:** [PR #6](https://github.com/thelonewander3r/PIIScanner/pull/6) → `main`  
-**Verified:** 72 pytest; mypy; benchmark gates; ruff clean
+**Merged:** [PR #8](https://github.com/thelonewander3r/PIIScanner/pull/8) (pre-commit, Action, docs) + [PR #9](https://github.com/thelonewander3r/PIIScanner/pull/9) (CI + release workflows)  
+**CI:** matrix green (ubuntu/windows/macos × 3.10/3.13)  
+**Hold:** no `v*` tag / PyPI publish without Emanuel’s explicit go; configure PyPI trusted publisher + `pypi` environment first
 
 ---
 
-## Sprint 4 — Distribution (IMPLEMENTATION COMPLETE — MERGE PENDING)
+## Sprint 5 — Launch collateral (NEXT)
 
-**Goal:** Make `piilint` installable and wireable in 5 minutes — PyPI, pre-commit, GitHub Action, and green CI/release automation.
+**Goal:** Make the public repo look launch-ready so first adopters succeed in five minutes.
 
-**Source:** `BUILD_PLAN.md` locked decisions (CI matrix, PyPI OIDC, repo layout) + Phase 6  
-**Tracking:** [Issue #7](https://github.com/thelonewander3r/PIIScanner/issues/7)  
-**Branch:** `feature/phase6-distribution`  
-**Hard blocker (push):** GitHub PAT must include `workflow` scope before `.github/workflows/*.yml` can be pushed. Emanuel owns unblocking. Non-workflow files (`action.yml`, `.pre-commit-hooks.yaml`, README, pyproject urls, docs) are ready regardless.
+**Source:** `BUILD_PLAN.md` Phase 8  
+**Tracking:** GitHub issue to be opened by Lead Dev from this scope call
 
-### Delivered on branch
+### In scope
 
-1. **CI workflow** — `.github/workflows/ci.yml`: `{ubuntu, windows, macos} × {3.10, 3.13}` — ruff check/format, mypy, pytest+benchmark, version smoke (`uv sync --extra dev`)
-2. **Release workflow** — `.github/workflows/release.yml` with PyPI OIDC trusted publishing (`pypa/gh-action-pypi-publish`, environment `pypi`); no long-lived token; no tag cut in this sprint
-3. **Pre-commit hook** — `.pre-commit-hooks.yaml` (`piilint --staged --fail-on medium`); README consumer snippet
-4. **GitHub Action** — root `action.yml` composite; SARIF write + upload documented as caller’s job
-5. **Packaging polish** — `project.urls` → `thelonewander3r/PIIScanner`; README pipx/uvx/pip; hatchling build smoke
-6. **Docs** — BUILD_PLAN Phase 6 DONE; this board updated; PyPI trusted-publisher checklist in README
+1. **README launch pass** — crisp install (`uvx`/`pipx`/`pip`), quickstart (`piilint .`), pre-commit + Action + SARIF upload examples, baseline adoption path, disclaimer + “not a secrets scanner” pairing note
+2. **Examples / demo** — point at (or add) a tiny synthetic demo path (notebook leak story); no real PII
+3. **CI badge + status** — README badge once workflows are on `main`
+4. **CONTRIBUTING / SECURITY** — short contributor notes; how to report issues (no bounty required)
+5. **Changelog stub** — `CHANGELOG.md` starting at unreleased / 0.1.0 prep (no publish yet)
+6. **BUILD_PLAN** — mark Phase 8 done when AC met; leave Phase 7 NER explicitly “post-launch”
 
-### Out of scope (Sprint 4) — unchanged
+### Out of scope (Sprint 5)
 
-- First production PyPI publish / release tag without Emanuel’s explicit go
-- Marketplace / launch copy (Phase 8)
-- NER (Phase 7)
-- New runtime dependencies
+- Cutting a PyPI release / `v*` tag (Emanuel go + trusted publisher only)
+- Implementing NER (Phase 7)
+- Paid/team layer features
 
-### Acceptance (Sprint 4)
+### Acceptance
 
-- [x] `ci.yml` prepared on feature branch (green on matrix once workflows can run on GitHub)
-- [x] `release.yml` present with OIDC trusted publishing + README checklist for Emanuel’s PyPI/environment setup
-- [x] `.pre-commit-hooks.yaml` smoke-tested (YAML parse / hook fields); README snippet correct
-- [x] `action.yml` documented (inputs/outputs); SARIF upload left to caller
-- [x] Package metadata consistent with public `piilint` name + corrected GitHub URLs
-- [ ] Lead Developer review approved
-- [ ] PO cleanup; PR to `main` (may need two-step push if PAT still lacks `workflow`)
-- [ ] Remote CI green on `main` (blocked on workflow push until PAT has `workflow` scope)
+- [ ] README is a complete five-minute path (install → scan → pre-commit/Action)
+- [ ] CI badge works; disclaimer + pairing guidance present
+- [ ] CONTRIBUTING + SECURITY present and accurate
+- [ ] CHANGELOG stub ready for 0.1.0
+- [ ] Lead Dev review; PO merge
 
 ### Roles
 
-- **Emanuel:** add PAT `workflow` scope (blocker); configure PyPI trusted publisher; approve first real PyPI publish
-- **Developer:** implement on `feature/phase6-distribution`; report AC on the issue
-- **Lead Developer:** review / guidance
-- **Product Owner:** cleanup/PR after approval
+- **Developer:** implement on branch off `main`
+- **Lead Developer:** open issue, review
+- **Product Owner:** this scope; cleanup/PR; **Emanuel** owns first publish go
 
 ---
 
-## How we work (agent loop)
+## How we work
 
-1. **Product Owner** owns project scope (this file): priorities, which phase/package is next
-2. **Lead Developer ↔ Developer** coordinate via **GitHub issues + DMs**
-3. **Developer** implements on a feature branch off `main`
-4. **Lead Developer** reviews architecture + AC
-5. **Product Owner** cleans up, opens/merges PR cadence, then defines the next work package (Lead Dev opens the issue from that scope call)
-
-Technical source of truth: `BUILD_PLAN.md`. Sprint/scope board: this file. Phase handoffs: `PHASE*_DEV_BRIEF.md`.
+1. Product Owner owns scope (this file)
+2. Lead Dev ↔ Developer via GitHub issues + DMs
+3. Developer implements on a feature branch
+4. Lead Dev reviews
+5. Product Owner merges, then scopes next package
 
 ---
 
-## Open blockers
+## Open blockers / holds
 
-| Blocker | Impact | Owner |
-|---|---|---|
-| GitHub PAT missing `workflow` scope | Cannot push `.github/workflows/ci.yml` or `release.yml` yet; files are prepared on `feature/phase6-distribution` | Emanuel (re-auth PAT with `workflow`) |
-
----
-
-## Later sprints (preview)
-
-- **Sprint 5 — Optional NER (Phase 7):** `piilint[ner]` + `setup-ner` (after launch OK)
-- **Sprint 6 — Launch collateral (Phase 8):** README polish, examples, Marketplace/SEO notes
+| Item | Owner |
+|---|---|
+| First PyPI publish (`v*` tag) — needs explicit go + trusted publisher / `pypi` env | Emanuel |
+| Phase 7 NER — deferred until after launch | Product Owner |
