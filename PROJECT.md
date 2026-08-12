@@ -32,6 +32,7 @@ Living PO doc for **scope**, **requirements**, and **sprints**. Technical build 
 - Console + JSON + SARIF reporters
 - Synthetic benchmark corpus with precision/recall CI gates
 - Windows, macOS, Linux; Python 3.10–3.13
+- Distribution: PyPI, pre-commit hook, GitHub Action, CI/release workflows
 
 ### Out of scope (v0)
 
@@ -78,59 +79,59 @@ Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
 | 2 | Tabular + notebook adapters | Done |
 | 3 | Policy & noise | Done — [issue #1](https://github.com/thelonewander3r/PIIScanner/issues/1) / [PR #2](https://github.com/thelonewander3r/PIIScanner/pull/2) |
 | 4 | Baseline + staged mode | Done — [issue #3](https://github.com/thelonewander3r/PIIScanner/issues/3) / [PR #4](https://github.com/thelonewander3r/PIIScanner/pull/4) |
-| 5 | Reporters & DX polish | **Done (Sprint 3)** — [issue #5](https://github.com/thelonewander3r/PIIScanner/issues/5) |
-| 6 | Distribution | Not started |
+| 5 | Reporters & DX polish | Done — [issue #5](https://github.com/thelonewander3r/PIIScanner/issues/5) / [PR #6](https://github.com/thelonewander3r/PIIScanner/pull/6) |
+| 6 | Distribution | **Next (Sprint 4)** — blocked on PAT `workflow` scope until ci/release YAML can push |
 | 7 | Optional NER | After launch OK |
 | 8 | Launch collateral | Not started |
 
 ---
 
-## Sprint 2 — Baseline + staged (COMPLETE)
+## Sprint 3 — Reporters & DX (COMPLETE)
 
-**Tracking:** [Issue #3](https://github.com/thelonewander3r/PIIScanner/issues/3) (closed)  
-**Merged:** [PR #4](https://github.com/thelonewander3r/PIIScanner/pull/4) → `main`  
-**Verified:** 60 pytest; mypy; benchmark gates; ruff E501 cleaned before merge
+**Tracking:** [Issue #5](https://github.com/thelonewander3r/PIIScanner/issues/5) (closed)  
+**Merged:** [PR #6](https://github.com/thelonewander3r/PIIScanner/pull/6) → `main`  
+**Verified:** 72 pytest; mypy; benchmark gates; ruff clean
 
 ---
 
-## Sprint 3 — Reporters & DX polish (COMPLETE — pending Lead Dev review / PR)
+## Sprint 4 — Distribution (NEXT)
 
-**Goal:** Machine-readable outputs for CI/Security tab, plus console polish — without breaking deterministic, masked-by-default reporting.
+**Goal:** Make `piilint` installable and wireable in 5 minutes — PyPI, pre-commit, GitHub Action, and green CI/release automation.
 
-**Source:** `BUILD_PLAN.md` § Output spec + Phase 5 + reporters layout  
-**Tracking:** [Issue #5](https://github.com/thelonewander3r/PIIScanner/issues/5)
+**Source:** `BUILD_PLAN.md` locked decisions (CI matrix, PyPI OIDC, repo layout) + Phase 6  
+**Tracking:** GitHub issue to be opened by Lead Dev from this scope call  
+**Hard blocker:** GitHub PAT must include `workflow` scope before `.github/workflows/*.yml` can be pushed. Emanuel owns unblocking.
 
 ### In scope
 
-1. **`--format json`** — stable versioned schema (`schema_version: 1`): tool version, config hash, per-finding records (masked sample + value hash, never raw PII), summary block; byte-stable key order / sort
-2. **`--format sarif`** — valid SARIF 2.1.0 suitable for `github/codeql-action/upload-sarif` (GitHub Security tab)
-3. **Console polish** — Rich summary grouped by file → findings table (severity color, entity, location, masked sample, confidence) → totals line (`N high · M medium · K low — F files scanned in Ts`)
-4. **CLI wiring** — `--format {console,json,sarif}` (console default); formats compose with `--baseline`, `--staged`, `--fail-on`
-5. **Chassis** — implement under `src/piilint/reporters/` (`json_.py`, `sarif.py`; extend `console.py`); no recognizer imports in reporters
-6. **Tests** — schema/fixture tests for JSON; SARIF structural validation (or golden with stable fields); masking regression (no raw corpus PII in any format); console snapshot or key substring asserts; benchmark gates stay green
-7. **Docs** — README examples for JSON/SARIF; mark Phase 5 done in `BUILD_PLAN.md` when AC met
+1. **CI workflow** — land `.github/workflows/ci.yml`: `{ubuntu, windows, macos} × {3.10, 3.13}` running ruff, mypy, pytest, benchmark gate (draft may already exist locally under `.github/workflows/ci.yml`)
+2. **Release workflow** — `.github/workflows/release.yml` with PyPI **trusted publishing (OIDC)** on tag/release; no long-lived PyPI token in secrets if avoidable
+3. **Pre-commit hook** — `.pre-commit-hooks.yaml` exposing a hook that runs `piilint` (prefer `--staged`); document `.pre-commit-config.yaml` snippet in README
+4. **GitHub Action** — root `action.yml` composite action wrapping the CLI for PR/CI use (SARIF upload optional/documented, not required inside the action)
+5. **Packaging polish** — confirm `pyproject.toml` / hatchling metadata ready for PyPI (`piilint` name, classifiers, entry point); README install via `pipx` / `uvx` / `pip`
+6. **Docs** — README: install, pre-commit, Action usage, CI badge once workflows are on `main`; mark Phase 6 done in `BUILD_PLAN.md` when AC met
 
-### Out of scope (Sprint 3)
+### Out of scope (Sprint 4)
 
-- PyPI / pre-commit hook publish / GitHub Action packaging (Phase 6) — SARIF should be *usable* by upload-sarif, but shipping `action.yml` waits
+- Actually publishing the **first** PyPI release to production without Emanuel’s explicit go (prepare workflows + dry-run; cut the tag only when he says)
+- GitHub Marketplace listing copy / screenshots (Phase 8 launch collateral)
 - NER extra (Phase 7)
-- `--show-matches` unmask behavior beyond what BUILD_PLAN already specifies (if missing, add only the documented refuse-when-`CI=true` rule)
-- New dependencies without Lead Dev / Emanuel approval (prefer stdlib + existing stack)
+- New runtime dependencies
 
-### Acceptance (Sprint 3 done when)
+### Acceptance (Sprint 4 done when)
 
-- [x] `--format json` emits schema_version 1, masked-only findings, deterministic output
-- [x] `--format sarif` is valid SARIF 2.1.0 and maps severities/locations usefully
-- [x] Console matches the Output spec summary shape
-- [x] Exit codes unchanged (0/1/2); reporters never turn exceptions into exit 1
-- [x] `uv run pytest` green; ruff + mypy strict on `src/`; benchmark gates hold with real numbers
-- [x] No recognizer imports in `reporters/`
+- [ ] `ci.yml` on `main` and green on the matrix (or documented waiver if a platform flake is filed)
+- [ ] `release.yml` present with OIDC trusted publishing configured (PyPI project / environment ready or checklist for Emanuel)
+- [ ] `.pre-commit-hooks.yaml` works in a smoke test; README snippet correct
+- [ ] `action.yml` runnable from a workflow; documented inputs/outputs
+- [ ] Package metadata consistent with public `piilint` name
 - [ ] Lead Developer review approved
 - [ ] PO cleanup; PR to `main`
 
 ### Roles
 
-- **Developer:** implement on a feature branch off `main`; report AC + numbers on the issue
+- **Emanuel:** add PAT `workflow` scope (blocker); approve first real PyPI publish
+- **Developer:** implement on a feature branch off `main`; report AC on the issue
 - **Lead Developer:** open issue from this scope, review, guidance
 - **Product Owner:** this scope call; cleanup/PR after approval
 
@@ -152,11 +153,11 @@ Technical source of truth: `BUILD_PLAN.md`. Sprint/scope board: this file. Phase
 
 | Blocker | Impact | Owner |
 |---|---|---|
-| GitHub PAT missing `workflow` scope | `.github/workflows/ci.yml` still local-only; CI cannot run on GitHub yet | Emanuel (re-auth PAT with `workflow`) |
+| GitHub PAT missing `workflow` scope | Cannot push `.github/workflows/ci.yml` or `release.yml`; Sprint 4 partially blocked | Emanuel (re-auth PAT with `workflow`) |
 
 ---
 
 ## Later sprints (preview)
 
-- **Sprint 4 — Distribution (Phase 6):** PyPI, pre-commit hook, GitHub Action, release workflow (needs `workflow` PAT scope)
 - **Sprint 5 — Optional NER (Phase 7):** `piilint[ner]` + `setup-ner` (after launch OK)
+- **Sprint 6 — Launch collateral (Phase 8):** README polish, examples, Marketplace/SEO notes
