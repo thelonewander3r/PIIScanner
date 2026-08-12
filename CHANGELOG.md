@@ -9,9 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- Post-0.1.0 notes go here. -->
 
-## [0.1.0] — TBD (tag day)
+## [0.1.0] — 2026-08-12
 
-First public release. **Not on PyPI until** maintainer go → `git tag v0.1.0` → OIDC trusted publisher via `.github/workflows/release.yml`.
+First public release on [PyPI](https://pypi.org/p/piilint). Published via OIDC trusted publisher (`.github/workflows/release.yml`) after tag `v0.1.0`.
 
 ### Added
 

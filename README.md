@@ -16,7 +16,7 @@ Local-first PII scanner for the files developers actually commit and send — no
 
 ### 1. Install
 
-**Once published to PyPI** (after `v0.1.0` — not yet released):
+**From PyPI** ([piilint](https://pypi.org/p/piilint) — `0.1.0` published):
 
 ```bash
 # recommended for CLI use
@@ -27,7 +27,7 @@ uvx piilint --version
 pip install piilint
 ```
 
-**Until then**, install from git or a local checkout (package is **not** on PyPI yet):
+**From git / local checkout** (contribute or run unreleased `main`):
 
 ```bash
 pipx install git+https://github.com/thelonewander3r/PIIScanner.git
@@ -52,7 +52,7 @@ Exit codes: `0` clean / nothing staged · `1` findings at or above `--fail-on` �
 ```yaml
 repos:
   - repo: https://github.com/thelonewander3r/PIIScanner
-    rev: v0.1.0   # pin to a release tag when available
+    rev: v0.1.0   # pin to a release tag
     hooks:
       - id: piilint
         # Default: --staged --fail-on medium
@@ -64,7 +64,7 @@ repos:
 - uses: actions/checkout@v4
 - name: Run piilint
   id: piilint
-  uses: thelonewander3r/PIIScanner@main   # pin to a tag when available
+  uses: thelonewander3r/PIIScanner@v0.1.0   # or @main for latest
   with:
     path: .
     fail-on: high
@@ -178,7 +178,7 @@ Add to your consuming project's `.pre-commit-config.yaml`:
 ```yaml
 repos:
   - repo: https://github.com/thelonewander3r/PIIScanner
-    rev: v0.1.0   # pin to a release tag when available
+    rev: v0.1.0   # pin to a release tag
     hooks:
       - id: piilint
         # Default args from the hook repo: --staged --fail-on medium
@@ -307,7 +307,7 @@ piilint . --ner               # enable PERSON + ADDRESS for this run
 
 ## Status
 
-Phases 0–8 are complete, including **Phase 7 optional NER** (`piilint[ner]`, `setup-ner`, `--ner` for PERSON/ADDRESS). Deterministic recognizers, text + tabular + notebook adapters, console / JSON / SARIF reporters, synthetic benchmark corpus + CI gate, config/policy/noise controls, baseline subtraction, `--staged` mode, CI/release workflows, pre-commit hook, GitHub Action, and launch docs. Sprint 7 prep targets first PyPI `0.1.0`; package is **not published** until Emanuel go + `v0.1.0` tag + OIDC trusted publisher (see [`docs/RELEASE.md`](./docs/RELEASE.md)).
+Phases 0–8 are complete, including **Phase 7 optional NER** (`piilint[ner]`, `setup-ner`, `--ner` for PERSON/ADDRESS). Deterministic recognizers, text + tabular + notebook adapters, console / JSON / SARIF reporters, synthetic benchmark corpus + CI gate, config/policy/noise controls, baseline subtraction, `--staged` mode, CI/release workflows, pre-commit hook, GitHub Action, and launch docs. **`0.1.0` is published** on [PyPI](https://pypi.org/p/piilint) (tag `v0.1.0`, OIDC trusted publisher). Future releases: see [`docs/RELEASE.md`](./docs/RELEASE.md).
 
 ## Contributing & security
 

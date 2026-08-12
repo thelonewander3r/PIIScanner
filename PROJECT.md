@@ -1,7 +1,7 @@
 ---
 title: piilint — Project management
 status: active
-updated: 2026-08-11
+updated: 2026-08-12
 owner: Product Owner
 ---
 
@@ -15,19 +15,19 @@ owner: Product Owner
 
 ## Status
 
-Phases **0–8** on `main`. Sprint 7 PyPI prep merged ([#15](https://github.com/thelonewander3r/PIIScanner/pull/15)). **No `v*` tag** until Emanuel go + trusted publisher.
+Phases **0–8** on `main`. **`piilint` `0.1.0` is on [PyPI](https://pypi.org/p/piilint)** (tag `v0.1.0`, OIDC release green, 2026-08-12). Sprint 8 hardening + smoke fix landed ([#16](https://github.com/thelonewander3r/PIIScanner/issues/16) / [#17](https://github.com/thelonewander3r/PIIScanner/pull/17)).
 
-**Next (Emanuel):** Sprint 8 in progress ([#16](https://github.com/thelonewander3r/PIIScanner/issues/16)), then publish when ready.  
-**Also tracked:** business-value backlog (below) — prioritize after hardening / first publish unless Emanuel reorders.
+**Next:** post-publish docs ([#18](https://github.com/thelonewander3r/PIIScanner/issues/18)); then business-value backlog below (e.g. `--redact`) unless Emanuel reorders.  
+**Hold:** further prod `v*` tags still need Emanuel’s explicit go.
 
 ---
 
-## Sprint 8 — Release hardening (IN PROGRESS)
+## Sprint 8 — Release hardening (DONE)
 
 **Goal:** Prove the artifact strangers install — not only that `uv sync --extra dev` tests pass on a checkout.
 
-**Tracking:** [Issue #16](https://github.com/thelonewander3r/PIIScanner/issues/16) · branch `feature/sprint8-release-hardening`  
-**Still no production `v*` tag** without Emanuel go.
+**Tracking:** [Issue #16](https://github.com/thelonewander3r/PIIScanner/issues/16) (closed) · smoke fix [#17](https://github.com/thelonewander3r/PIIScanner/pull/17) · **`v0.1.0` published 2026-08-12**.  
+Further prod tags still need Emanuel go.
 
 ### In scope
 
@@ -46,10 +46,10 @@ Phases **0–8** on `main`. Sprint 7 PyPI prep merged ([#15](https://github.com/
 
 ### Acceptance
 
-- [ ] CI proves build + clean-install smoke on ≥2 OSes
-- [ ] Default (no-ner) smoke is required green on PRs
-- [ ] RELEASE.md updated with hardening + TestPyPI notes
-- [ ] Lead Dev LGTM; PO merge; still stop before prod tag
+- [x] CI proves build + clean-install smoke on ≥2 OSes
+- [x] Default (no-ner) smoke is required green on PRs
+- [x] RELEASE.md updated with hardening + TestPyPI notes
+- [x] Lead Dev LGTM; PO merge; first prod tag cut after Emanuel go (`v0.1.0`)
 
 ---
 
@@ -71,7 +71,7 @@ Phases **0–8** on `main`. Sprint 7 PyPI prep merged ([#15](https://github.com/
 
 Ordered by “unlocks paying / serious org adoption” vs nice-to-have:
 
-1. **Public install + proven release path (now)** — PyPI + hardening + publisher. Without this, adoption stays “clone the repo.”
+1. ~~**Public install + proven release path**~~ — **done** (`0.1.0` on PyPI). Remaining adoption work is product (below), not packaging.
 2. **`--redact` / clean-copy export** — BUILD_PLAN’s most-requested post-MVP; businesses need “fix the leak,” not only “find it.”
 3. **Org policy packs** — shareable `piilint.toml` / allowlists / severity maps as versioned artifacts (even as a folder of examples before a SaaS).
 4. **Findings-metadata history (team layer)** — trend “new PII introduced this week” without centralizing raw files; this is the paid wedge in BUILD_PLAN.
@@ -86,8 +86,8 @@ Ordered by “unlocks paying / serious org adoption” vs nice-to-have:
 
 | When | What |
 |---|---|
-| **Now** | Sprint 8 release hardening → trusted publisher → `v0.1.0` on go |
-| **Right after publish** | `--redact` MVP + example org policy packs (docs/examples) |
+| **Now** | Post-`0.1.0` docs ([#18](https://github.com/thelonewander3r/PIIScanner/issues/18)); then `--redact` MVP + example org policy packs |
+| **Right after** | Example org policy packs (docs/examples); locale / format opportunistic |
 | **First paid wedge** | Team metadata history + shared policy (design before build) |
 | **Parallel opportunistic** | xlsx/PDF adapters; locale packs |
 | **Defer** | Full SaaS UI, speculative chassis reuse |

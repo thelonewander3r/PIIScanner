@@ -1,9 +1,11 @@
-# Release runbook (v0.1.0)
+# Release runbook
 
-Maintainer steps for the **first** PyPI publish of `piilint`.  
-**Hard stop:** do **not** cut a `v*` tag or publish until **Emanuel** gives an explicit go.
+Maintainer steps for PyPI publishes of `piilint`.
 
-See also: [issue #14](https://github.com/thelonewander3r/PIIScanner/issues/14), [issue #16](https://github.com/thelonewander3r/PIIScanner/issues/16) (Sprint 8 hardening), [`PROJECT.md`](../PROJECT.md) Sprint 7–8, README trusted-publisher checklist.
+**First publish (done):** `v0.1.0` → [PyPI `piilint`](https://pypi.org/p/piilint) on **2026-08-12** via OIDC (`release.yml`).  
+**Hard stop for future tags:** do **not** cut a new `v*` tag or publish until **Emanuel** gives an explicit go.
+
+See also: [issue #14](https://github.com/thelonewander3r/PIIScanner/issues/14), [issue #16](https://github.com/thelonewander3r/PIIScanner/issues/16) (Sprint 8 hardening, closed), [`PROJECT.md`](../PROJECT.md), README trusted-publisher checklist.
 
 ---
 
@@ -25,11 +27,13 @@ Before any production `v*` tag, CI and local checks must prove that a **built ar
 
 ## 0. Preconditions (prep PR)
 
-- [ ] Prep PR merged to `main` (metadata, CHANGELOG fold, README install wording, this runbook).
-- [ ] CI green on `main` (including **package-smoke** on ubuntu + windows).
-- [ ] Local `uv build` previously succeeded; wheel entry point `piilint` present.
-- [ ] Version is `0.1.0` in `pyproject.toml` and `src/piilint/__init__.py`.
-- [ ] Sprint 8 release-hardening AC met ([issue #16](https://github.com/thelonewander3r/PIIScanner/issues/16)).
+For **`v0.1.0` (done 2026-08-12)** these were met. Re-check the list before any **future** tag:
+
+- [x] Prep PR merged to `main` (metadata, CHANGELOG fold, README install wording, this runbook).
+- [x] CI green on `main` (including **package-smoke** on ubuntu + windows).
+- [x] Local `uv build` previously succeeded; wheel entry point `piilint` present.
+- [x] Version is `0.1.0` in `pyproject.toml` and `src/piilint/__init__.py` *(bump for next release)*.
+- [x] Sprint 8 release-hardening AC met ([issue #16](https://github.com/thelonewander3r/PIIScanner/issues/16)).
 
 ---
 
@@ -116,13 +120,15 @@ TestPyPI lets maintainers prove OIDC trusted publishing end-to-end without publi
 
 ## 2. Wait for Emanuel go
 
-Product Owner / Lead Dev: **stop here** until Emanuel explicitly says to cut the tag.
+Product Owner / Lead Dev: **stop here** until Emanuel explicitly says to cut the **next** tag.
 
-Checklist before asking:
+**`v0.1.0`:** go received; tagged and published 2026-08-12.
 
-- [ ] Trusted publisher configured (or Emanuel acknowledges he will configure it before/at tag time).
-- [ ] GitHub `pypi` environment exists.
-- [ ] CHANGELOG `[0.1.0]` date set (or set in the same commit as the tag).
+Checklist before asking for a **future** release:
+
+- [x] Trusted publisher configured *(done for `v0.1.0`; confirm still valid)*.
+- [x] GitHub `pypi` environment exists.
+- [ ] CHANGELOG date set for the new version (or set in the same commit as the tag).
 - [ ] No secrets or unexpected files in a fresh `uv build` inspect.
 - [ ] `package-smoke` green on ubuntu + windows for the release commit.
 
@@ -173,7 +179,7 @@ pip install "piilint[ner]"
 piilint setup-ner
 ```
 
-Update README if any “until published” git-fallback wording should be softened after a successful publish (separate small docs PR is fine).
+After each successful publish, confirm README primary install still points at PyPI and CHANGELOG dates match the tag day.
 
 ---
 
@@ -206,4 +212,4 @@ pre-commit try-repo . piilint --verbose --all-files
 - No TestPyPI upload unless Emanuel asks (see §1b).
 - No long-lived PyPI tokens in GitHub secrets.
 - No `v*` tag from prep branches without Emanuel go.
-- No prod PyPI upload from Sprint 8 hardening work.
+- First prod upload (`v0.1.0`) completed 2026-08-12; no further prod upload without a new Emanuel go.
