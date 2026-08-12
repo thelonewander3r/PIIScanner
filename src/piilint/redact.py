@@ -11,7 +11,7 @@ import io
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from piilint.adapters.text import TextAdapter, looks_binary
 from piilint.config import Config
@@ -550,7 +550,7 @@ def _redact_docx_tables(
 ) -> int:
     """Redact via cell.text; first-row headers become context keys (like xlsx)."""
     total = 0
-    table_list: list[Any] = list(tables)  # type: ignore[arg-type]
+    table_list = list(cast(Any, tables))
     for table_idx, table in enumerate(table_list, start=1):
         label = f"{context_prefix}:table{table_idx}" if context_prefix else f"table{table_idx}"
         headers: dict[int, str] = {}
