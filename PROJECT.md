@@ -17,15 +17,15 @@ owner: Product Owner
 
 `piilint` **0.1.0** is on PyPI. Phases 0–8 + release hardening done. Post-release docs done (#18/#19).
 
-**Next (Emanuel 2026-08-12):** Sprint 9 — `--redact` + example org policy packs.
+**Next (Emanuel 2026-08-12):** Sprint 9 in progress ([#20](https://github.com/thelonewander3r/PIIScanner/issues/20)) — `--redact` + example org policy packs.
 
 ---
 
-## Sprint 9 — Redact + example policy packs (NEXT)
+## Sprint 9 — Redact + example policy packs (IN PROGRESS)
 
 **Goal:** (1) Let users write cleaned copies of files with PII masked/replaced, not only detect. (2) Ship shareable example `piilint.toml` policy packs teams can copy.
 
-**Tracking:** issue to be opened by Lead Dev from this scope call  
+**Tracking:** [Issue #20](https://github.com/thelonewander3r/PIIScanner/issues/20)  
 **Branch:** off `main` → PR → LGTM → PO merge (no direct-to-main)  
 **Version:** land on `main` as post-0.1.0 work; **do not** cut `v0.2.0` unless Emanuel explicitly goes.
 
