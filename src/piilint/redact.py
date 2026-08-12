@@ -467,7 +467,7 @@ def _redact_xlsx_file(
 ) -> int:
     """Rewrite string cells into a new workbook under ``dest`` (stretch Sprint 11)."""
     try:
-        from openpyxl import load_workbook  # type: ignore[import-untyped]
+        from openpyxl import load_workbook
     except ImportError as exc:
         raise RedactError(
             'Excel redact requires piilint[office]. Install with: pip install "piilint[office]"'

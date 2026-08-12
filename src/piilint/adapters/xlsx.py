@@ -48,7 +48,7 @@ class XlsxAdapter:
         if not office_xlsx_available():
             _warn_missing_once()
             return
-        from openpyxl import load_workbook  # type: ignore[import-untyped]
+        from openpyxl import load_workbook
 
         try:
             wb = load_workbook(path, read_only=True, data_only=True)
