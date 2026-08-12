@@ -17,16 +17,16 @@ owner: Product Owner
 
 `piilint` **0.1.0** is on PyPI. Sprint 9 (`redact` + policy packs) done on `main` ([#20](https://github.com/thelonewander3r/PIIScanner/issues/20) / [#21](https://github.com/thelonewander3r/PIIScanner/pull/21)).
 
-**Next (Emanuel 2026-08-12):** Sprint 10 — finish redact for **notebooks + parquet**.  
+**Next (Emanuel 2026-08-12):** Sprint 10 in progress ([#22](https://github.com/thelonewander3r/PIIScanner/issues/22)) — notebooks + parquet redact.  
 **Hold:** no `v0.2.0` (or other prod `v*` tags) without Emanuel’s explicit go.
 
 ---
 
-## Sprint 10 — Notebook + Parquet redact (NEXT)
+## Sprint 10 — Notebook + Parquet redact (IN PROGRESS)
 
 **Goal:** Extend `piilint redact` so the formats that matter most for the product story (`.ipynb` leak demos, Parquet exports) get cleaned copies the same way text/JSON/CSV already do.
 
-**Tracking:** issue to be opened by Lead Dev from this scope call  
+**Tracking:** [Issue #22](https://github.com/thelonewander3r/PIIScanner/issues/22)  
 **Branch:** off `main` → PR → LGTM → PO merge  
 **Version:** land on `main` only; **do not** cut `v0.2.0` unless Emanuel goes.
 
