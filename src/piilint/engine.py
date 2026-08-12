@@ -253,7 +253,7 @@ def scan_path(
     provided (kept for unit tests / callers from Phase 1–2).
     """
     started = perf_counter()
-    cfg = config if config is not None else default_config()
+    cfg = config.copy() if config is not None else default_config()
     if min_confidence is not None:
         cfg.scan.min_confidence = min_confidence
     if enable_ip is not None:
