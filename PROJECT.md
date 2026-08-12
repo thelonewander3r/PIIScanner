@@ -7,97 +7,76 @@ owner: Product Owner
 
 # piilint — Project management
 
-Living PO doc for **scope**, **requirements**, and **sprints**. Technical build detail stays in [`BUILD_PLAN.md`](./BUILD_PLAN.md). Developer handoffs live in phase briefs (e.g. [`PHASE3_DEV_BRIEF.md`](./PHASE3_DEV_BRIEF.md)).
+Living PO doc for **scope**, **requirements**, and **sprints**. Technical build detail stays in [`BUILD_PLAN.md`](./BUILD_PLAN.md).
 
 **One-liner:** Find PII in the files developers actually commit and send — notebooks, CSV, JSON, Parquet, and source code. Everything stays local.
 
-**Package:** `piilint` | **License:** Apache-2.0
-
-**GitHub:** https://github.com/thelonewander3r/PIIScanner
-
+**GitHub:** https://github.com/thelonewander3r/PIIScanner  
 **Local:** `C:\Users\E_man\Documents\Projects\PIIScanner2`
 
 ---
 
-## Scope (v0 / MVP)
+## Status
 
-### In scope
+Phases **0–6 + 8** are done on `main`. Next ordered by Emanuel (2026-08-11):
 
-- Local-first CLI (`piilint`) — no scan-time network
-- File types: text/source, notebooks (incl. outputs), CSV/TSV, JSON/JSONL, Parquet
-- Deterministic recognizers + optional NER post-launch
-- Policy / baseline / staged / reporters (console, JSON, SARIF)
-- Distribution: PyPI, pre-commit, GitHub Action, CI/release workflows
-
-### Out of scope (v0)
-
-- Secrets scanning · `--redact` · databases/PDF/Office/OCR · telemetry · compliance claims
-
-### Product promise
-
-> Before this file reaches GitHub, an LLM, a vendor, or a fixture directory — tell me if it contains PII, without uploading my data anywhere.
-
-Disclaimer: *piilint helps you find sensitive data before it leaks. It is a detection aid, not a compliance certification, and cannot guarantee that all sensitive data is found.*
-
----
-
-## Phase map → sprints
+1. **Sprint 6 — Phase 7 optional NER** (now)
+2. **First PyPI / `v*` release** (after NER; still needs explicit go + trusted publisher)
 
 | Phase | Theme | Status |
 |---|---|---|
-| 0–2 | Bootstrap → adapters | Done |
-| 3 | Policy & noise | Done — [#1](https://github.com/thelonewander3r/PIIScanner/issues/1) / [#2](https://github.com/thelonewander3r/PIIScanner/pull/2) |
-| 4 | Baseline + staged | Done — [#3](https://github.com/thelonewander3r/PIIScanner/issues/3) / [#4](https://github.com/thelonewander3r/PIIScanner/pull/4) |
-| 5 | Reporters & DX | Done — [#5](https://github.com/thelonewander3r/PIIScanner/issues/5) / [#6](https://github.com/thelonewander3r/PIIScanner/pull/6) |
-| 6 | Distribution | **Done** — [#7](https://github.com/thelonewander3r/PIIScanner/issues/7) / [#8](https://github.com/thelonewander3r/PIIScanner/pull/8) + [#9](https://github.com/thelonewander3r/PIIScanner/pull/9) |
-| 7 | Optional NER | After launch OK |
-| 8 | Launch collateral | **In progress (Sprint 5)** — [issue #10](https://github.com/thelonewander3r/PIIScanner/issues/10) |
+| 0–6, 8 | MVP + launch collateral | Done |
+| 7 | Optional NER | **Next (Sprint 6)** |
+| — | First PyPI publish | Queued after Sprint 6 |
 
 ---
 
-## Sprint 4 — Distribution (COMPLETE)
+## Sprint 6 — Optional NER (NEXT)
 
-**Merged:** [PR #8](https://github.com/thelonewander3r/PIIScanner/pull/8) (pre-commit, Action, docs) + [PR #9](https://github.com/thelonewander3r/PIIScanner/pull/9) (CI + release workflows)  
-**CI:** matrix green (ubuntu/windows/macos × 3.10/3.13)  
-**Hold:** no `v*` tag / PyPI publish without Emanuel’s explicit go; configure PyPI trusted publisher + `pypi` environment first
+**Goal:** Add PERSON/ADDRESS detection as a heavy optional extra without bloating the base install or breaking the no-scan-time-network promise.
 
----
-
-## Sprint 5 — Launch collateral (IN PROGRESS)
-
-**Goal:** Make the public repo look launch-ready so first adopters succeed in five minutes.
-
-**Source:** `BUILD_PLAN.md` Phase 8  
-**Tracking:** [Issue #10](https://github.com/thelonewander3r/PIIScanner/issues/10)
+**Source:** `BUILD_PLAN.md` locked NER decision + Phase 7 + entity table  
+**Tracking:** GitHub issue to be opened by Lead Dev from this scope call
 
 ### In scope
 
-1. **README launch pass** — crisp install (`uvx`/`pipx`/`pip`), quickstart (`piilint .`), pre-commit + Action + SARIF upload examples, baseline adoption path, disclaimer + “not a secrets scanner” pairing note
-2. **Examples / demo** — point at (or add) a tiny synthetic demo path (notebook leak story); no real PII
-3. **CI badge + status** — README badge once workflows are on `main`
-4. **CONTRIBUTING / SECURITY** — short contributor notes; how to report issues (no bounty required)
-5. **Changelog stub** — `CHANGELOG.md` starting at unreleased / 0.1.0 prep (no publish yet)
-6. **BUILD_PLAN** — mark Phase 8 done when AC met; leave Phase 7 NER explicitly “post-launch”
+1. **Optional extra** — populate `piilint[ner]` in `pyproject.toml` with `presidio-analyzer` + spaCy (versions pinned/compatible with Python 3.10–3.13); base install stays lean (`ner = []` today)
+2. **`piilint setup-ner`** — explicit command to fetch/install the English model; **only** allowed network path besides CI/release; clear errors if model missing when `--ner` is used
+3. **Recognizer** — PERSON + ADDRESS via Presidio/spaCy; default **off**; require both `[ner]` extra **and** `--ner` (and/or config toggle) to emit
+4. **Severity / confidence** — default medium; integrate with existing policy (allowlists, min_confidence, fail-on, baseline fingerprints)
+5. **Chassis rules** — keep adapters/findings/baseline/reporters free of recognizer imports; NER lives under `recognizers/`
+6. **Corpus + tests** — synthetic NER true positives in prose (per BUILD_PLAN corpus note); hard negatives stay clean; benchmark gates must not regress for core entities; document NER metrics separately if not in the core recall gate
+7. **Docs** — README: install `[ner]`, `setup-ner`, `--ner` examples; disclaimer unchanged; mark Phase 7 done in `BUILD_PLAN.md` when AC met
+8. **Windows-first** — setup and scan path work on Windows 11
 
-### Out of scope (Sprint 5)
+### Out of scope (Sprint 6)
 
-- Cutting a PyPI release / `v*` tag (Emanuel go + trusted publisher only)
-- Implementing NER (Phase 7)
-- Paid/team layer features
+- Non-English NER models
+- PyPI / `v*` tag (next package after this)
+- `--redact` / anonymizer
+- Turning NER on by default
 
 ### Acceptance
 
-- [ ] README is a complete five-minute path (install → scan → pre-commit/Action)
-- [ ] CI badge works; disclaimer + pairing guidance present
-- [ ] CONTRIBUTING + SECURITY present and accurate
-- [ ] CHANGELOG stub ready for 0.1.0
+- [ ] `pip`/`uv` install without `[ner]` does not pull Presidio/spaCy
+- [ ] `piilint[ner]` + `setup-ner` enables `--ner` scans for PERSON/ADDRESS
+- [ ] Without setup/model, `--ner` fails clearly (exit 2), not silently
+- [ ] Default scans (no `--ner`) unchanged vs current MVP
+- [ ] pytest + core benchmark gates still hold with real numbers; ruff/mypy clean
+- [ ] No scan-time network except inside `setup-ner`
 - [ ] Lead Dev review; PO merge
 
 ### Roles
 
-- **Developer:** implement on branch off `main`
-- **Lead Developer:** open issue, review
-- **Product Owner:** this scope; cleanup/PR; **Emanuel** owns first publish go
+- **Developer:** feature branch off `main`; report AC + numbers on the issue
+- **Lead Developer:** open issue, architecture review
+- **Product Owner:** this scope; cleanup/PR; then scope PyPI release package
+
+---
+
+## Queued after Sprint 6 — First PyPI release
+
+Prep trusted publisher + `pypi` environment, confirm 0.1.0 metadata, dry-run build, then cut `v*` **only** on Emanuel’s explicit go. No publish work starts until NER merges (unless he reorders).
 
 ---
 
@@ -108,12 +87,3 @@ Disclaimer: *piilint helps you find sensitive data before it leaks. It is a dete
 3. Developer implements on a feature branch
 4. Lead Dev reviews
 5. Product Owner merges, then scopes next package
-
----
-
-## Open blockers / holds
-
-| Item | Owner |
-|---|---|
-| First PyPI publish (`v*` tag) — needs explicit go + trusted publisher / `pypi` env | Emanuel |
-| Phase 7 NER — deferred until after launch | Product Owner |
