@@ -17,20 +17,22 @@ owner: Product Owner
 
 `piilint` **0.1.0** is on PyPI. Sprints 9–13 on `main` (redact, policy packs, office, locales).
 
-**Next (Emanuel 2026-08-12):** Sprint 14 — **team / findings-metadata layer design** (the paid wedge — design only).  
+**In progress (Emanuel 2026-08-12):** Sprint 14 — **team / findings-metadata layer design** (the paid wedge — design only). See [`docs/TEAM_LAYER.md`](./docs/TEAM_LAYER.md). Tracking [#32](https://github.com/thelonewander3r/PIIScanner/issues/32).  
 **Hold:** no `v0.2.0` / prod `v*` tags without Emanuel’s explicit go.  
-**Verify:** Local Tester (Windows); not GitHub Actions.
+**Verify:** Local Tester (Windows) docs-light / N/A (docs-only; not GHA).
 
 ---
 
-## Sprint 14 — Team layer design (NEXT)
+## Sprint 14 — Team layer design (IN PROGRESS)
 
 **Goal:** Lock a buildable design for the paid wedge **without** building SaaS yet: shared org policy + findings-**metadata** history, with the hard promise that **raw file contents never leave the machine**.
 
+**Design doc:** [`docs/TEAM_LAYER.md`](./docs/TEAM_LAYER.md)  
 **Source:** BUILD_PLAN business model + “Team layer” post-MVP notes.  
-**Tracking:** issue to be opened by Lead Dev from this scope call  
-**Branch:** off `main` → PR → Local Tester (docs-light) + Lead LGTM → PO merge  
-**Version:** docs only on `main`; **no tag**; **no production backend**.
+**Tracking:** [#32](https://github.com/thelonewander3r/PIIScanner/issues/32)  
+**Branch:** `feature/sprint14-team-layer-design` → PR → Local Tester (docs-light / N/A) + Lead LGTM → PO merge  
+**Version:** docs only on `main`; **no tag**; **no production backend**.  
+**Verify:** Local Tester docs-light / N/A (docs-only; not GHA). Optional metadata-export spike **skipped**.
 
 ### In scope (design deliverables)
 

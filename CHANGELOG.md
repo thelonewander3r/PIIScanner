@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Sprint 14 (design): [`docs/TEAM_LAYER.md`](./docs/TEAM_LAYER.md) — team / findings-metadata layer design (trust boundary, MVP slice order A→B→C, CLI proposals, open questions). Docs only; no SaaS/backend. Tracking [#32](https://github.com/thelonewander3r/PIIScanner/issues/32).
+
 - Sprint 13: `.docx` scan under optional `piilint[office]` (`python-docx`); paragraph + table + header/footer text; legacy `.doc` not supported; missing extra skips with the same one-time stderr hint as xlsx/PDF.
 - `piilint redact` stretch: cleaned `.docx` copies (paragraph/table/header/footer string runs via `paragraph.text = …`; sources never modified).
 
