@@ -21,7 +21,7 @@ from piilint.policy import apply_policy
 from piilint.recognizers import Match, RecognizerRegistry
 from piilint.walker import iter_files
 
-# Required Sprint 9 formats. Notebooks/parquet are follow-ups.
+# Supported formats for redact (Sprint 9 + 10).
 _TEXT = TextAdapter()
 
 
@@ -45,12 +45,16 @@ class _Span:
 
 
 def _supported(path: Path) -> str | None:
-    """Return adapter kind or None if unsupported for redact v1."""
+    """Return adapter kind or None if unsupported for redact."""
     suffix = path.suffix.lower()
     if suffix in {".csv", ".tsv"}:
         return "csv"
     if suffix in {".json", ".jsonl"}:
         return "json"
+    if suffix == ".ipynb":
+        return "notebook"
+    if suffix == ".parquet":
+        return "parquet"
     if _TEXT.supports(path):
         return "text"
     return None
@@ -302,6 +306,155 @@ def _redact_csv_file(
     return buf.getvalue(), total
 
 
+def _nb_text(value: Any) -> str:
+    if isinstance(value, list):
+        return "".join(str(part) for part in value)
+    if value is None:
+        return ""
+    return value if isinstance(value, str) else str(value)
+
+
+def _redact_notebook_file(
+    path: Path,
+    dest: Path,
+    *,
+    registry: RecognizerRegistry,
+    config: Config,
+    rel_path: str,
+) -> int:
+    """Redact source + scanned output text in a notebook; write nbformat-compatible copy."""
+    import nbformat
+    from nbformat.reader import NotJSONError
+
+    try:
+        nb = nbformat.read(path, as_version=4)  # type: ignore[no-untyped-call]
+    except (OSError, NotJSONError, nbformat.ValidationError, ValueError) as exc:
+        raise RedactError(f"Invalid notebook {rel_path}: {exc}") from exc
+
+    total = 0
+    for cell in nb.cells:
+        source = _nb_text(cell.get("source"))
+        new_source, n = redact_plain_text(
+            source, registry=registry, config=config, rel_path=rel_path
+        )
+        cell["source"] = new_source
+        total += n
+
+        if cell.get("cell_type") != "code":
+            continue
+        outputs = cell.get("outputs") or []
+        for output in outputs:
+            output_type = getattr(output, "output_type", None) or (
+                output.get("output_type") if isinstance(output, dict) else None
+            )
+            if output_type == "stream":
+                raw = getattr(output, "text", None)
+                if raw is None and isinstance(output, dict):
+                    raw = output.get("text")
+                block = _nb_text(raw)
+                if not block:
+                    continue
+                redacted, n = redact_plain_text(
+                    block, registry=registry, config=config, rel_path=rel_path
+                )
+                if isinstance(output, dict):
+                    output["text"] = redacted
+                else:
+                    output.text = redacted
+                total += n
+            elif output_type in {"execute_result", "display_data"}:
+                data = getattr(output, "data", None)
+                if data is None and isinstance(output, dict):
+                    data = output.get("data")
+                if not isinstance(data, dict) or "text/plain" not in data:
+                    continue
+                plain = data["text/plain"]
+                block = _nb_text(plain)
+                if not block:
+                    continue
+                redacted, n = redact_plain_text(
+                    block, registry=registry, config=config, rel_path=rel_path
+                )
+                data["text/plain"] = redacted
+                total += n
+            # Binary / image payloads left untouched (scan does not extract them as text).
+
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    nbformat.write(nb, dest)  # type: ignore[no-untyped-call]
+    return total
+
+
+def _is_stringish_arrow_type(arrow_type: Any) -> bool:
+    import pyarrow as pa
+
+    if pa.types.is_string(arrow_type) or pa.types.is_large_string(arrow_type):
+        return True
+    if pa.types.is_dictionary(arrow_type):
+        value_type = arrow_type.value_type
+        return bool(pa.types.is_string(value_type) or pa.types.is_large_string(value_type))
+    return False
+
+
+def _redact_parquet_file(
+    path: Path,
+    dest: Path,
+    *,
+    registry: RecognizerRegistry,
+    config: Config,
+    rel_path: str,
+) -> int:
+    """Redact string / dictionary-string columns; leave other types unchanged.
+
+    Nested/list/struct columns are not rewritten in v1 (documented limitation).
+    """
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    try:
+        table = pq.read_table(path)
+    except (OSError, pa.ArrowInvalid, pa.ArrowTypeError) as exc:
+        raise RedactError(f"Invalid parquet {rel_path}: {exc}") from exc
+
+    total = 0
+    arrays: list[Any] = []
+    names: list[str] = []
+    for i, field in enumerate(table.schema):
+        names.append(field.name)
+        col = table.column(i)
+        if not _is_stringish_arrow_type(field.type):
+            arrays.append(col)
+            continue
+        values = col.to_pylist()
+        new_values: list[str | None] = []
+        for value in values:
+            if value is None:
+                new_values.append(None)
+                continue
+            text = value if isinstance(value, str) else str(value)
+            if not text:
+                new_values.append(text)
+                continue
+            redacted, n = redact_plain_text(
+                text,
+                registry=registry,
+                config=config,
+                rel_path=rel_path,
+                context_key=field.name,
+            )
+            new_values.append(redacted)
+            total += n
+        # Normalize to plain string column (dictionary ? string after rewrite).
+        arrays.append(pa.array(new_values, type=pa.string()))
+
+    new_table = pa.table({name: arrays[idx] for idx, name in enumerate(names)})
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        pq.write_table(new_table, dest)
+    except (OSError, pa.ArrowInvalid, pa.ArrowTypeError) as exc:
+        raise RedactError(f"Failed to write parquet {rel_path}: {exc}") from exc
+    return total
+
+
 def _safe_out_path(out_root: Path, rel: str) -> Path:
     """Resolve destination under out_root; refuse escapes."""
     # Normalize rel to forbid absolute / drive / .. escape
@@ -360,11 +513,22 @@ def redact_tree(
                     file_path, registry=registry, config=config, rel_path=rel
                 )
                 _write_text(dest, new_text)
-            else:
+            elif kind == "csv":
                 new_text, n = _redact_csv_file(
                     file_path, registry=registry, config=config, rel_path=rel
                 )
                 _write_text(dest, new_text)
+            elif kind == "notebook":
+                n = _redact_notebook_file(
+                    file_path, dest, registry=registry, config=config, rel_path=rel
+                )
+            elif kind == "parquet":
+                n = _redact_parquet_file(
+                    file_path, dest, registry=registry, config=config, rel_path=rel
+                )
+            else:
+                skipped += 1
+                continue
         except (OSError, json.JSONDecodeError, csv.Error, UnicodeError) as exc:
             raise RedactError(f"Failed to redact {rel}: {exc}") from exc
 

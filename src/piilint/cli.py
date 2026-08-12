@@ -392,8 +392,9 @@ def redact_cmd(
     """Copy supported files under PATH into -o with PII spans rewritten.
 
     Honors the same config/policy as scan (entity toggles, allowlists, inline
-    suppressions, min_confidence, excludes). Formats: text + json/jsonl + csv/tsv.
-    Notebooks/parquet are skipped in v1. No in-place mode. No new base dependencies.
+    suppressions, min_confidence, excludes). Formats: text + json/jsonl + csv/tsv +
+    notebooks (.ipynb incl. outputs) + parquet (string columns). No in-place mode.
+    No new base dependencies.
     """
     if output is None:
         typer.secho("-o / --output is required", fg=typer.colors.RED, err=True)
