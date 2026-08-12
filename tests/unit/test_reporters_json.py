@@ -47,7 +47,10 @@ def _sample_finding(
 def test_json_schema_version_and_required_keys() -> None:
     cfg = default_config()
     result = ScanResult(
-        findings=[_sample_finding(), _sample_finding(path="b.py", line=3, raw="beta@retailmail.test")],
+        findings=[
+            _sample_finding(),
+            _sample_finding(path="b.py", line=3, raw="beta@retailmail.test"),
+        ],
         files_scanned=2,
         elapsed_seconds=0.5,
     )
