@@ -32,6 +32,7 @@ dependencies = [
   "pyyaml>=6.0",
   "pyarrow>=15.0",
   "nbformat>=5.9",
+  "tomli>=2.0; python_version < '3.11'",
 ]
 
 [project.optional-dependencies]

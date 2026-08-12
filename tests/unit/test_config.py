@@ -144,6 +144,29 @@ def test_cli_missing_path_exits_2() -> None:
     assert result.exit_code == 2
 
 
+def test_partial_piilint_toml_preserves_pyproject_scalars(tmp_path: Path) -> None:
+    """Unspecified keys in piilint.toml must not reset pyproject values to defaults."""
+    (tmp_path / "pyproject.toml").write_text(
+        """
+[tool.piilint.scan]
+fail_on = "low"
+min_confidence = 0.55
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "piilint.toml").write_text(
+        """
+[allowlist]
+domains = ["mycompany.dev"]
+""",
+        encoding="utf-8",
+    )
+    cfg = load_config(tmp_path)
+    assert cfg.scan.fail_on == "low"
+    assert cfg.scan.min_confidence == 0.55
+    assert cfg.allowlist.domains == ["mycompany.dev"]
+
+
 def test_merge_later_wins() -> None:
     a = config_from_mapping({"scan": {"fail_on": "low"}}, source="a")
     b = config_from_mapping({"scan": {"fail_on": "high"}}, source="b")

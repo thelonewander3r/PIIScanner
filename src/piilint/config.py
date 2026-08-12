@@ -19,8 +19,13 @@ from piilint.findings import DEFAULT_SEVERITY, EntityType, Severity
 
 if sys.version_info >= (3, 11):
     import tomllib
-else:  # pragma: no cover - Python 3.10 CI needs optional tomli
-    import tomli as tomllib
+else:  # pragma: no cover - exercised on 3.10 CI
+    try:
+        import tomli as tomllib
+    except ModuleNotFoundError as exc:  # pragma: no cover
+        raise ImportError(
+            "TOML config requires tomllib (Python 3.11+) or the tomli package on 3.10"
+        ) from exc
 
 
 class ConfigError(Exception):
@@ -80,6 +85,23 @@ class Config:
     def severity_for(self, entity: EntityType) -> Severity:
         return self.severity_overrides.get(entity, DEFAULT_SEVERITY[entity])
 
+    def copy(self) -> Config:
+        """Deep-enough copy so callers can mutate without sharing state."""
+        return Config(
+            scan=ScanConfig(
+                fail_on=self.scan.fail_on,
+                min_confidence=self.scan.min_confidence,
+                exclude=list(self.scan.exclude),
+                phone_region=self.scan.phone_region,
+            ),
+            entity_enabled=dict(self.entity_enabled),
+            severity_overrides=dict(self.severity_overrides),
+            allowlist=AllowlistConfig(
+                values=list(self.allowlist.values),
+                domains=list(self.allowlist.domains),
+            ),
+        )
+
 
 def default_config() -> Config:
     return Config()
@@ -134,12 +156,10 @@ def _parse_severity(value: Any, *, path: str) -> Severity:
     return _SEVERITY_VALUES[value.lower()]
 
 
-def config_from_mapping(data: Mapping[str, Any], *, source: str) -> Config:
-    """Parse a TOML-like mapping into Config. Raises ConfigError on invalid input."""
+def apply_mapping(cfg: Config, data: Mapping[str, Any], *, source: str) -> None:
+    """Apply only keys present in ``data`` onto ``cfg`` (in-place overlay)."""
     if not isinstance(data, Mapping):
         raise ConfigError(f"{source}: root must be a table")
-
-    cfg = default_config()
 
     scan_raw = data.get("scan")
     if scan_raw is not None:
@@ -196,6 +216,11 @@ def config_from_mapping(data: Mapping[str, Any], *, source: str) -> Config:
                 for d in _as_str_list(allow_raw["domains"], path=f"{source}: allowlist.domains")
             ]
 
+
+def config_from_mapping(data: Mapping[str, Any], *, source: str) -> Config:
+    """Parse a TOML-like mapping into Config. Raises ConfigError on invalid input."""
+    cfg = default_config()
+    apply_mapping(cfg, data, source=source)
     return cfg
 
 
@@ -246,7 +271,11 @@ def load_file_config(path: Path) -> Config:
 
 
 def merge_configs(*configs: Config) -> Config:
-    """Merge configs left-to-right; later entries win for set fields."""
+    """Merge full Config objects left-to-right; later entries win for scalars.
+
+    Prefer ``load_config`` / ``apply_mapping`` for file overlays so unspecified
+    keys do not reset earlier layers to defaults.
+    """
     result = default_config()
     for cfg in configs:
         result.scan.fail_on = cfg.scan.fail_on
@@ -279,25 +308,30 @@ def load_config(
 ) -> Config:
     """Load config with documented precedence. Raises ConfigError."""
     scan_root = resolve_scan_root(target)
-    layers: list[Config] = [default_config()]
+    cfg = default_config()
 
     pyproject = find_pyproject(scan_root)
     if pyproject is not None:
-        layers.append(load_file_config(pyproject))
+        data = _read_toml(pyproject)
+        tool = data.get("tool")
+        if isinstance(tool, Mapping):
+            section = tool.get("piilint")
+            if section is not None:
+                if not isinstance(section, Mapping):
+                    raise ConfigError(f"{pyproject}: [tool.piilint] must be a table")
+                apply_mapping(cfg, section, source=str(pyproject))
 
     piilint_toml = scan_root / "piilint.toml"
     if piilint_toml.is_file():
-        layers.append(load_file_config(piilint_toml))
-
-    merged = merge_configs(*layers)
+        apply_mapping(cfg, _read_toml(piilint_toml), source=str(piilint_toml))
 
     if cli_fail_on is not None:
-        merged.scan.fail_on = _parse_fail_on(cli_fail_on, path="CLI --fail-on")
+        cfg.scan.fail_on = _parse_fail_on(cli_fail_on, path="CLI --fail-on")
     if cli_min_confidence is not None:
-        merged.scan.min_confidence = _as_float(cli_min_confidence, path="CLI --min-confidence")
+        cfg.scan.min_confidence = _as_float(cli_min_confidence, path="CLI --min-confidence")
     if cli_enable_ip is not None:
-        merged.entity_enabled[EntityType.IP_ADDRESS] = cli_enable_ip
+        cfg.entity_enabled[EntityType.IP_ADDRESS] = cli_enable_ip
     if cli_exclude:
-        merged.scan.exclude = list(cli_exclude)
+        cfg.scan.exclude = list(cli_exclude)
 
-    return merged
+    return cfg

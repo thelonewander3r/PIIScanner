@@ -262,9 +262,9 @@ csv/parquet/json/jsonl/ipynb adapters; column aggregation; column-name confidenc
 **AC:** corpus cases pass per format; notebook-output leak detected (the demo case); `scripts/perf_smoke.py` shows 100 MB CSV ≤ 60 s and 1 GB parquet streamed with < 500 MB peak memory.
 
 ### Phase 3 — Policy & noise (1–2 days) — DONE 2026-08-11
-Config file + precedence (`config.py`); `.piiignore` tested; inline `# piilint: ignore` / `ignore[ENTITY]` (text/code only; tabular skipped in v0); allowlists (values + email domains); test-data downweight (−0.4, severity ≤ low) then `min_confidence`; entity enable/severity overrides; `--fail-on` + exit 0/1/2 (config errors → 2); `scan.exclude` wired into walker.
+Config file + precedence (`config.py` overlay merge so unspecified keys do not reset lower layers); `.piiignore` tested; inline `# piilint: ignore` / `ignore[ENTITY]` (text/code only; tabular skipped in v0); allowlists (values + email domains); test-data downweight (−0.4, severity ≤ low) then `min_confidence`; entity enable/severity overrides; `--fail-on` + exit 0/1/2 (config errors → 2); `scan.exclude` wired into walker. `Finding.normalized_value` + `normalize_value()` support policy without recognizer imports. Optional `tomli` for Python 3.10 TOML.
 
-**AC verified:** precedence CLI > `piilint.toml` > `[tool.piilint]` > defaults; bad TOML exit 2; unit tests for allowlist/downweight/suppressions/`.piiignore`/exclude; `uv run pytest` + benchmark gates; ruff + mypy strict on `src/`; no recognizer imports in adapters/findings/reporters; sample `piilint.toml` + README notes.
+**AC verified:** precedence CLI > `piilint.toml` > `[tool.piilint]` > defaults (partial-file overlay tested); bad TOML exit 2; unit tests for allowlist/downweight/suppressions/`.piiignore`/exclude; `uv run pytest` + benchmark gates; ruff + mypy strict on `src/`; no recognizer imports in adapters/findings/reporters; sample `piilint.toml` + README notes. Benchmark 2026-08-11 (local): HIGH-severity precision 1.000; CORE recall 1.000; all core entities P/R 1.000; 47 pytest passed.
 
 ### Phase 4 — Baseline + staged mode (1–2 days) — NOT STARTED
 
