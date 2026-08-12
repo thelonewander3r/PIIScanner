@@ -352,8 +352,6 @@ def baseline_cmd(
     raise typer.Exit(0)
 
 
-
-
 @app.command(
     "redact",
     help="Write cleaned copies with PII masked (never overwrites sources).",
@@ -436,6 +434,7 @@ def redact_cmd(
         f"({result.spans_redacted} span(s) redacted, {result.files_skipped} skipped)"
     )
     raise typer.Exit(0)
+
 
 @app.command("setup-ner", help="Download the English spaCy model for optional NER.")
 def setup_ner_cmd(

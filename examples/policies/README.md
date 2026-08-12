@@ -1,4 +1,4 @@
- Example org policy packs
+# Example org policy packs
 
 Copy any file below to your repo root as `piilint.toml`, or point tools at it when your workflow supports a config path. These are **starting points**, not mandates.
 

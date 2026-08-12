@@ -119,9 +119,7 @@ def _filter_matches(
             )
         )
     kept = apply_policy(findings, config, line_texts=line_texts)
-    offset_entity = {
-        (f.location.offset, f.entity) for f in kept if f.location.offset is not None
-    }
+    offset_entity = {(f.location.offset, f.entity) for f in kept if f.location.offset is not None}
     return [
         _Span(start=m.start, end=m.end, entity=m.entity, value=m.value)
         for m in matches
