@@ -6,40 +6,101 @@ Local-first PII scanner for the files developers actually commit and send — no
 
 > **Disclaimer:** piilint helps you find sensitive data before it leaks. It is a detection aid, not a compliance certification, and cannot guarantee that all sensitive data is found. It does not make anyone GDPR/HIPAA/PCI compliant.
 
-**Package name:** `piilint` (PyPI name `piiscan` was already taken).
+**Package:** `piilint` (PyPI name `piiscan` was already taken) · **License:** Apache-2.0 · **Repo:** [thelonewander3r/PIIScanner](https://github.com/thelonewander3r/PIIScanner)
 
-**Repo:** https://github.com/thelonewander3r/PIIScanner
+**Not a secrets scanner.** Pair with [gitleaks](https://github.com/gitleaks/gitleaks) or [trufflehog](https://github.com/trufflesecurity/trufflehog) for API keys and tokens.
 
-## Install
+---
+
+## Five-minute path
+
+### 1. Install
 
 ```bash
 # recommended for CLI use
 pipx install piilint
-# or
+# or one-off
 uvx piilint --version
-
-# classic
+# or classic
 pip install piilint
 ```
 
-Until the first PyPI release is cut, install from a clone / git:
+Until the first PyPI release is cut, install from git or a local checkout:
 
 ```bash
 pipx install git+https://github.com/thelonewander3r/PIIScanner.git
-# or from a local checkout
+# or
 uv sync --extra dev
 uv run piilint --version
 ```
 
-## Quick start
+### 2. Scan
 
 ```bash
-piilint --version
-piilint tests/corpus/text
-piilint . --fail-on high
+piilint .                     # scan the current directory
+piilint . --fail-on high      # fail CI/pre-commit on high-severity findings
 ```
 
-## Configuration (Phase 3)
+Exit codes: `0` clean / nothing staged · `1` findings at or above `--fail-on` · `2` usage/config/git error.
+
+### 3. Wire into git / CI (optional)
+
+**Pre-commit** — add to `.pre-commit-config.yaml`:
+
+```yaml
+repos:
+  - repo: https://github.com/thelonewander3r/PIIScanner
+    rev: v0.1.0   # pin to a release tag when available
+    hooks:
+      - id: piilint
+        # Default: --staged --fail-on medium
+```
+
+**GitHub Action + SARIF** — drop into a workflow:
+
+```yaml
+- uses: actions/checkout@v4
+- name: Run piilint
+  id: piilint
+  uses: thelonewander3r/PIIScanner@main   # pin to a tag when available
+  with:
+    path: .
+    fail-on: high
+    format: sarif
+- name: Upload SARIF
+  if: always()
+  uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: ${{ steps.piilint.outputs.sarif-path }}
+```
+
+### 4. Adopt without boiling the ocean
+
+```bash
+piilint baseline . -o piilint-baseline.json   # fingerprints only — never raw PII
+piilint . --baseline piilint-baseline.json    # report NEW findings only
+piilint . --staged                            # scan only git-staged files
+```
+
+---
+
+## Demo
+
+The classic leak: a notebook runs `df.head()` and the **output cell** still holds customer rows when you commit the `.ipynb`.
+
+Synthetic demo (no real PII): [`tests/corpus/notebook/leak_demo.ipynb`](./tests/corpus/notebook/leak_demo.ipynb)
+
+```bash
+piilint tests/corpus/notebook
+```
+
+See also [`examples/README.md`](./examples/README.md) for a short pointer and expected story.
+
+All of `tests/corpus/` is **100% synthetic** labeled data generated for tests.
+
+---
+
+## Configuration
 
 Precedence (**highest wins**): CLI flags → `piilint.toml` at the scan root → `[tool.piilint]` in `pyproject.toml` → built-in defaults.
 
@@ -65,42 +126,34 @@ domains = ["example.com", "mycompany.dev"]
 - **Allowlists** — exact normalized values and email domains drop matching findings.
 - **Test-data downweight** — obvious fixtures (example.com, 555-01xx, 4111…, RFC5737 IPs) get −0.4 confidence and severity capped at low, then `min_confidence` is re-applied.
 
-## Baseline + staged (Phase 4)
+---
+
+## Baseline + staged
 
 Adopt without fixing history first, and scan only what is about to land in git.
 
 ```bash
-# Capture current findings as a baseline (fingerprints only — never raw PII)
 piilint baseline . -o piilint-baseline.json
-
-# Report NEW findings only (subtract known fingerprints)
 piilint . --baseline piilint-baseline.json
-
-# Pre-commit friendly: scan only git-staged files (Added/Copied/Modified/Renamed)
 piilint . --staged
 ```
 
 **Fingerprint design:** SHA-256(relative path, entity, normalized-value hash, occurrence index).
 Line numbers are **excluded** so ordinary edits do not resurrect old findings.
 
-**Tradeoff:** an edit that only moves a value to a different line will not reappear as “new.”
+**Tradeoff:** an edit that only moves a value to a different line will not reappear as "new."
 Moved or duplicated values may still match by occurrence index. Commit a fresh baseline when
 you intentionally accept a new set of findings.
 
-Exit codes: `0` clean / nothing staged · `1` findings ≥ `--fail-on` · `2` usage/config/git error.
+---
 
-## Output formats (Phase 5)
+## Output formats
 
 Default output is a Rich **console** report (grouped by file → severity-colored table → totals).
 
 ```bash
-# Machine-readable JSON (schema_version 1) — masked samples + value hashes only
 piilint . --format json
-
-# SARIF 2.1.0 for GitHub code scanning (upload via github/codeql-action/upload-sarif)
 piilint . --format sarif > piilint.sarif
-
-# Compose with baseline / staged / fail-on
 piilint . --format json --baseline piilint-baseline.json --fail-on high
 ```
 
@@ -112,7 +165,9 @@ are excluded so the hash is stable across identical policy runs.
 `--show-matches` unmasks the console Sample column for local triage only. It is **refused**
 when `CI=true` (exit 2) and does not apply to JSON/SARIF (those formats never emit raw PII).
 
-## Pre-commit hook (Phase 6)
+---
+
+## Pre-commit hook
 
 This repo ships a pre-commit hook definition in [`.pre-commit-hooks.yaml`](./.pre-commit-hooks.yaml).
 
@@ -135,7 +190,9 @@ Notes:
 - `fail-on` defaults to **medium** in the hook; change via `args` as shown above.
 - Requires a git repository at hook time (same as CLI `--staged`).
 
-## GitHub Action (Phase 6)
+---
+
+## GitHub Action
 
 Composite action at [`action.yml`](./action.yml). Example workflow:
 
@@ -196,7 +253,9 @@ jobs:
 |---|---|
 | `sarif-path` | Path to written SARIF when `format=sarif`; empty otherwise |
 
-## CI & release (Phase 6)
+---
+
+## CI & release
 
 - **CI:** [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) — `{ubuntu, windows, macos} × {3.10, 3.13}` with ruff, mypy (`files=src/piilint`), pytest (incl. benchmark gate), and `piilint --version`.
 - **Release:** [`.github/workflows/release.yml`](./.github/workflows/release.yml) — on tag `v*` / GitHub Release published: build with `uv build` (hatchling), publish via [`pypa/gh-action-pypi-publish`](https://github.com/pypa/gh-action-pypi-publish) using **OIDC trusted publishing** (no long-lived PyPI token).
@@ -215,20 +274,18 @@ Before the first real publish (tag `v0.1.0` only with explicit go):
 4. Do **not** store a PyPI API token in Actions secrets for this flow.
 5. Cut a tag only when ready: `git tag v0.1.0 && git push origin v0.1.0` (triggers release workflow).
 
-> **Note:** Pushing `.github/workflows/*.yml` requires a GitHub PAT (or credentials) with the `workflow` scope. If CI/release YAML cannot land yet, non-workflow distribution files (`action.yml`, `.pre-commit-hooks.yaml`, README) can still merge; re-auth the PAT and push workflows afterward.
+---
 
 ## Status
 
-Phases 0–6 complete (locally): deterministic recognizers, text + tabular + notebook adapters, console / JSON / SARIF reporters, synthetic benchmark corpus + CI gate, config/policy/noise controls, baseline subtraction, `--staged` mode, CI/release workflows, pre-commit hook, and GitHub Action. First production PyPI publish is intentionally deferred until maintainer go + OIDC publisher setup.
+Phases 0–6 and **Phase 8 (launch collateral)** are complete. Deterministic recognizers, text + tabular + notebook adapters, console / JSON / SARIF reporters, synthetic benchmark corpus + CI gate, config/policy/noise controls, baseline subtraction, `--staged` mode, CI/release workflows, pre-commit hook, GitHub Action, and launch docs. **Phase 7 (optional NER)** remains post-launch. First production PyPI publish is intentionally deferred until maintainer go + OIDC publisher setup.
 
-## Pairing
+## Contributing & security
 
-This is **not** a secrets scanner. Pair with [gitleaks](https://github.com/gitleaks/gitleaks) / trufflehog for API keys and tokens.
+- Contributors: see [`CONTRIBUTING.md`](./CONTRIBUTING.md)
+- Vulnerability reports: see [`SECURITY.md`](./SECURITY.md)
+- Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
 
 ## License
 
 Apache-2.0
-
-## Corpus note
-
-`tests/corpus/` contains **100% synthetic** labeled data, generated for tests. It never contains real personal data.

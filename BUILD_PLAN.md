@@ -130,6 +130,8 @@ Design constraint: `adapters/`, `findings.py`, `baseline.py`, and `reporters/` m
 piilint/
 ├── pyproject.toml            ├── LICENSE (Apache-2.0)
 ├── README.md                 ├── BUILD_PLAN.md (this file)
+├── CONTRIBUTING.md SECURITY.md CHANGELOG.md PROJECT.md
+├── examples/README.md        # pointer to synthetic notebook demo
 ├── .pre-commit-hooks.yaml    ├── action.yml (composite GitHub Action)
 ├── .github/workflows/        #   ci.yml, release.yml
 ├── src/piilint/
@@ -285,7 +287,13 @@ CI matrix workflow (`.github/workflows/ci.yml`: ubuntu/windows/macos × 3.10/3.1
 
 ### Phase 7 — Optional NER extra (1–2 days, after launch is fine) — NOT STARTED
 
-### Phase 8 — Launch collateral — NOT STARTED
+Post-launch. Optional `piilint[ner]` → Presidio/spaCy for PERSON/ADDRESS; explicit `piilint setup-ner`; off by default. **Do not start until after launch collateral ships.**
+
+### Phase 8 — Launch collateral — DONE 2026-08-11
+
+README five-minute path (install via uvx/pipx/pip → `piilint .` → pre-commit + Action/SARIF → baseline adoption); Demo section pointing at synthetic notebook leak (`tests/corpus/notebook/leak_demo.ipynb` + `examples/README.md`); CI badge verified for `thelonewander3r/PIIScanner` `ci.yml`; `CONTRIBUTING.md` (uv setup, pytest/ruff/mypy, conventional commits, Windows-first); `SECURITY.md` (GitHub Security Advisories preferred; no bounty; never paste real PII); `CHANGELOG.md` Keep a Changelog stub (Unreleased + 0.1.0 prep for Phases 0–6 — **not published**). No PyPI publish / `v*` tag / NER in this phase.
+
+**AC verified:** README five-minute path + disclaimer + pairing; CI badge URL correct; CONTRIBUTING + SECURITY present; CHANGELOG stub; synthetic-only demo pointer; `uv run pytest` / ruff / mypy green locally.
 
 ---
 
