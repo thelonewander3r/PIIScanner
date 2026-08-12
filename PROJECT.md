@@ -78,7 +78,7 @@ Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
 | 2 | Tabular + notebook adapters | Done |
 | 3 | Policy & noise | Done — [issue #1](https://github.com/thelonewander3r/PIIScanner/issues/1) / [PR #2](https://github.com/thelonewander3r/PIIScanner/pull/2) |
 | 4 | Baseline + staged mode | Done — [issue #3](https://github.com/thelonewander3r/PIIScanner/issues/3) / [PR #4](https://github.com/thelonewander3r/PIIScanner/pull/4) |
-| 5 | Reporters & DX polish | **Next (Sprint 3)** |
+| 5 | Reporters & DX polish | **In progress (Sprint 3)** — [issue #5](https://github.com/thelonewander3r/PIIScanner/issues/5) |
 | 6 | Distribution | Not started |
 | 7 | Optional NER | After launch OK |
 | 8 | Launch collateral | Not started |
@@ -93,12 +93,12 @@ Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
 
 ---
 
-## Sprint 3 — Reporters & DX polish (NEXT)
+## Sprint 3 — Reporters & DX polish (IN PROGRESS)
 
 **Goal:** Machine-readable outputs for CI/Security tab, plus console polish — without breaking deterministic, masked-by-default reporting.
 
 **Source:** `BUILD_PLAN.md` § Output spec + Phase 5 + reporters layout  
-**Tracking:** GitHub issue to be opened by Lead Dev from this scope call
+**Tracking:** [Issue #5](https://github.com/thelonewander3r/PIIScanner/issues/5)
 
 ### In scope
 
