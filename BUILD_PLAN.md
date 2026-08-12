@@ -9,7 +9,7 @@ tags:
   - ai
   - canonical
 status: active
-updated: 2026-08-11
+updated: 2026-08-12
 ---
 
 # PII Scanner — Agent Build Plan
@@ -312,7 +312,7 @@ Prove install-from-wheel before any production `v*` tag ([issue #16](https://git
 ## Post-MVP roadmap (do NOT build now)
 
 - ~~`--redact` writing anonymized copies~~ ? **done (Sprint 9)** as `piilint redact PATH -o OUT` (base-wheel span rewrite; incl. notebooks + parquet string columns). No `presidio-anonymizer`.
-- Team layer (the paid product): shared policy packs, org-wide baselines, findings-**metadata** history dashboard (raw data never leaves the machine — only findings metadata).
+- Team layer (the paid product): shared policy packs, org-wide baselines, findings-**metadata** history dashboard (raw data never leaves the machine — only findings metadata). **Design (Sprint 14):** see [`docs/TEAM_LAYER.md`](./docs/TEAM_LAYER.md) (issue [#32](https://github.com/thelonewander3r/PIIScanner/issues/32)).
 - ~~More formats: xlsx, PDF, docx~~ — **scan via `piilint[office]` (Sprints 11/13)**; PDF text-only / no OCR / no legacy `.doc`; PDF redact deferred; docx redact shipped as stretch. Locales: Sprint 12 adds `SIN_CA` / `NINO_UK` / `BSN_NL` + `phone_regions`; further world-ID catalog still follow-up.
 - **Chassis reuse:** the adapter/findings/baseline/reporter chassis is deliberately generic. Candidate sibling product: dataset diffing (DataDiff CI). Revisit after this ships; do not speculatively generalize now.
 
