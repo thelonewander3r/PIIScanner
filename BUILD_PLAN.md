@@ -297,6 +297,12 @@ README five-minute path (install via uvx/pipx/pip → `piilint .` → pre-commit
 
 ---
 
+### Sprint 7 — First PyPI release prep (IN PROGRESS, 2026-08-11)
+
+Prep-only for `piilint` `0.1.0` ([issue #14](https://github.com/thelonewander3r/PIIScanner/issues/14), branch `feature/sprint7-pypi-prep`). Metadata polish (`pyproject.toml`), CHANGELOG fold into `[0.1.0]` (date TBD), README install + trusted-publisher checklist, maintainer runbook [`docs/RELEASE.md`](./docs/RELEASE.md), local `uv build` dry-run. **Not published** — no `v*` tag without Emanuel’s explicit go. Trusted publisher + GitHub environment `pypi` remain **Emanuel UI** steps. See [`PROJECT.md`](./PROJECT.md).
+
+---
+
 ## Post-MVP roadmap (do NOT build now)
 
 - `--redact` mode writing anonymized copies (presidio-anonymizer) — likely the most-requested feature.

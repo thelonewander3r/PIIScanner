@@ -381,7 +381,6 @@ def setup_ner_cmd(
     raise typer.Exit(0)
 
 
-
 def run() -> None:
     """CLI entry that supports `piilint .` and `piilint scan .`."""
     import sys
