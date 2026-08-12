@@ -16,6 +16,7 @@ from piilint.engine import ScanResult, scan_path
 from piilint.findings import Severity
 from piilint.gitutil import GitError, find_repo_root, staged_files
 from piilint.recognizers import ner as ner_mod
+from piilint.redact import RedactError, redact_tree
 from piilint.reporters import render_console, render_json, render_sarif
 
 app = typer.Typer(
@@ -351,6 +352,91 @@ def baseline_cmd(
     raise typer.Exit(0)
 
 
+
+
+@app.command(
+    "redact",
+    help="Write cleaned copies with PII masked (never overwrites sources).",
+)
+def redact_cmd(
+    path: Annotated[
+        Path,
+        typer.Argument(exists=False, readable=False, help="File or directory to redact."),
+    ] = Path("."),
+    output: Annotated[
+        Path | None,
+        typer.Option(
+            "--output",
+            "-o",
+            help="Output directory for cleaned copies (required; sources untouched).",
+        ),
+    ] = None,
+    min_confidence: Annotated[
+        float | None,
+        typer.Option("--min-confidence", min=0.0, max=1.0, help="Drop matches below this."),
+    ] = None,
+    enable_ip: Annotated[
+        bool | None,
+        typer.Option("--enable-ip/--no-enable-ip", help="Enable IP address detection."),
+    ] = None,
+    ner: Annotated[
+        bool,
+        typer.Option(
+            "--ner",
+            help="Enable optional PERSON/ADDRESS NER while redacting (requires piilint[ner]).",
+        ),
+    ] = False,
+    exclude: Annotated[
+        list[str] | None,
+        typer.Option("--exclude", help="Glob to exclude (repeatable; overrides config exclude)."),
+    ] = None,
+) -> None:
+    """Copy supported files under PATH into -o with PII spans rewritten.
+
+    Honors the same config/policy as scan (entity toggles, allowlists, inline
+    suppressions, min_confidence, excludes). Formats: text + json/jsonl + csv/tsv.
+    Notebooks/parquet are skipped in v1. No in-place mode. No new base dependencies.
+    """
+    if output is None:
+        typer.secho("-o / --output is required", fg=typer.colors.RED, err=True)
+        raise typer.Exit(2)
+    if not path.exists():
+        typer.secho(f"Path not found: {path}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(2)
+
+    try:
+        config = load_config(
+            path,
+            cli_min_confidence=min_confidence,
+            cli_enable_ip=enable_ip,
+            cli_exclude=exclude,
+        )
+    except ConfigError as exc:
+        typer.secho(f"Config error: {exc}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(2) from exc
+
+    if ner:
+        try:
+            ner_mod.require_ner_ready()
+        except ner_mod.NerDependencyError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(2) from exc
+
+    try:
+        result = redact_tree(path, output, config=config, enable_ner=ner)
+    except RedactError as exc:
+        typer.secho(f"Redact error: {exc}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(2) from exc
+    except Exception as exc:  # noqa: BLE001
+        typer.secho(f"Redact failed: {exc}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(2) from exc
+
+    typer.echo(
+        f"Wrote {result.files_written} file(s) ? {output} "
+        f"({result.spans_redacted} span(s) redacted, {result.files_skipped} skipped)"
+    )
+    raise typer.Exit(0)
+
 @app.command("setup-ner", help="Download the English spaCy model for optional NER.")
 def setup_ner_cmd(
     model: Annotated[
@@ -391,7 +477,7 @@ def run() -> None:
         typer.echo(__version__)
         raise SystemExit(0)
     # `piilint .` / `piilint PATH` → treat as scan when first token is not a command/flag
-    known = {"scan", "baseline", "setup-ner", "--help", "-h", "help"}
+    known = {"scan", "baseline", "redact", "setup-ner", "--help", "-h", "help"}
     if argv and argv[0] not in known and not argv[0].startswith("-"):
         sys.argv = [sys.argv[0], "scan", *argv]
     elif not argv:

@@ -25,7 +25,7 @@ owner: Product Owner
 
 **Goal:** (1) Let users write cleaned copies of files with PII masked/replaced, not only detect. (2) Ship shareable example `piilint.toml` policy packs teams can copy.
 
-**Tracking:** issue to be opened by Lead Dev from this scope call  
+**Tracking:** [Issue #20](https://github.com/thelonewander3r/PIIScanner/issues/20) ? branch `feature/sprint9-redact-policy-packs`  
 **Branch:** off `main` → PR → LGTM → PO merge (no direct-to-main)  
 **Version:** land on `main` as post-0.1.0 work; **do not** cut `v0.2.0` unless Emanuel explicitly goes.
 

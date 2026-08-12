@@ -1,0 +1,12 @@
+# Strict CI gate ? fail on medium+, keep noise down.
+# Copy to repo root as piilint.toml (example only; not a compliance certification).
+
+[scan]
+fail_on = "medium"
+min_confidence = 0.75
+
+[entities]
+ip_address = false
+
+[allowlist]
+domains = ["example.com", "example.org", "example.net"]

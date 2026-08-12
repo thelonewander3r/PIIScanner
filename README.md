@@ -305,9 +305,29 @@ piilint . --ner               # enable PERSON + ADDRESS for this run
 
 ---
 
+## Redact (cleaned copies)
+
+Write **copies** with PII spans replaced by the same masks as findings (no in-place overwrite in v1):
+
+```bash
+piilint redact ./data -o ./data-clean
+```
+
+Supported today: **text** + **json/jsonl** + **csv/tsv**. Notebooks/parquet are skipped (follow-up). Uses the base wheel only (no new deps / no `presidio-anonymizer`). Honors the same config/policy as `scan` (allowlists, `# piilint: ignore`, entity toggles, `min_confidence`, excludes). Sources under the input path are never modified.
+
+## Example policy packs
+
+Starter `piilint.toml` templates (detection aid only ? **not** compliance certifications):
+
+- [`examples/policies/strict-ci.toml`](./examples/policies/strict-ci.toml)
+- [`examples/policies/data-eng.toml`](./examples/policies/data-eng.toml)
+- [`examples/policies/open-source-lib.toml`](./examples/policies/open-source-lib.toml)
+
+See [`examples/policies/README.md`](./examples/policies/README.md) for copy instructions and disclaimer.
+
 ## Status
 
-Phases 0–8 are complete, including **Phase 7 optional NER** (`piilint[ner]`, `setup-ner`, `--ner` for PERSON/ADDRESS). Deterministic recognizers, text + tabular + notebook adapters, console / JSON / SARIF reporters, synthetic benchmark corpus + CI gate, config/policy/noise controls, baseline subtraction, `--staged` mode, CI/release workflows, pre-commit hook, GitHub Action, and launch docs. **`0.1.0` is published** on [PyPI](https://pypi.org/p/piilint) (tag `v0.1.0`, OIDC trusted publisher). Future releases: see [`docs/RELEASE.md`](./docs/RELEASE.md).
+Phases 0–8 are complete, including **Phase 7 optional NER** (`piilint[ner]`, `setup-ner`, `--ner` for PERSON/ADDRESS). Deterministic recognizers, text + tabular + notebook adapters, console / JSON / SARIF reporters, synthetic benchmark corpus + CI gate, config/policy/noise controls, baseline subtraction, `--staged` mode, CI/release workflows, pre-commit hook, GitHub Action, and launch docs. **`0.1.0` is published** on [PyPI](https://pypi.org/p/piilint) (tag `v0.1.0`, OIDC trusted publisher). Sprint 9 adds `piilint redact` + example policy packs (see above). Future releases: [`docs/RELEASE.md`](./docs/RELEASE.md).
 
 ## Contributing & security
 
