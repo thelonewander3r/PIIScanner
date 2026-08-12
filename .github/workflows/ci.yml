@@ -73,16 +73,14 @@ jobs:
           set -euo pipefail
           WHEEL=$(ls dist/piilint-*.whl | head -n1)
           echo "Installing wheel: $WHEEL"
+          # uv venvs may ship without pip; install the wheel via uv pip.
           uv venv .smoke-venv
-          if [ -x .smoke-venv/bin/python ]; then
-            PY=.smoke-venv/bin/python
+          uv pip install --python .smoke-venv "$WHEEL"
+          if [ -x .smoke-venv/bin/piilint ]; then
             PIILINT=.smoke-venv/bin/piilint
           else
-            PY=.smoke-venv/Scripts/python
             PIILINT=.smoke-venv/Scripts/piilint
           fi
-          "$PY" -m pip install --upgrade pip
-          "$PY" -m pip install "$WHEEL"
           "$PIILINT" --version
           set +e
           OUT=$("$PIILINT" scan tests/corpus/text --fail-on low 2>&1)
