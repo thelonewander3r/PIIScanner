@@ -15,56 +15,27 @@ owner: Product Owner
 
 ## Status
 
-`piilint` **0.1.0** is on PyPI. Sprints 9–13 on `main` (redact, policy packs, office, locales).
+`piilint` **0.1.0** is on PyPI. Sprints 9–13 on `main`. **Sprint 14 design done** — [`docs/TEAM_LAYER.md`](./docs/TEAM_LAYER.md) ([#32](https://github.com/thelonewander3r/PIIScanner/issues/32) / [#35](https://github.com/thelonewander3r/PIIScanner/pull/35)).
 
-**Next (Emanuel 2026-08-12):** Sprint 14 in progress ([#32](https://github.com/thelonewander3r/PIIScanner/issues/32)) — team layer design only.  
+**Next:** Emanuel answers open Qs / picks MVP slice in TEAM_LAYER §8, then a **build** sprint.  
 **Hold:** no `v0.2.0` / prod `v*` tags without Emanuel’s explicit go.  
 **Verify:** Local Tester (Windows); not GitHub Actions.
 
 ---
 
-## Sprint 14 — Team layer design (IN PROGRESS)
+## Sprint 14 — Team layer design (DONE)
 
-**Goal:** Lock a buildable design for the paid wedge **without** building SaaS yet: shared org policy + findings-**metadata** history, with the hard promise that **raw file contents never leave the machine**.
+**Merged:** [PR #35](https://github.com/thelonewander3r/PIIScanner/pull/35) · closes [#32](https://github.com/thelonewander3r/PIIScanner/issues/32)
 
-**Source:** BUILD_PLAN business model + “Team layer” post-MVP notes.  
-**Tracking:** [Issue #32](https://github.com/thelonewander3r/PIIScanner/issues/32) · verify via Local Tester (no GHA)  
-**Branch:** off `main` → PR → Local Tester (docs-light) + Lead LGTM → PO merge  
-**Version:** docs only on `main`; **no tag**; **no production backend**.
+### Shipped
 
-### In scope (design deliverables)
+- [`docs/TEAM_LAYER.md`](./docs/TEAM_LAYER.md) — ICP, trust boundary (metadata only), MVP slice order **A→B→C** (shared policy → metadata history → org baselines), CLI proposals, privacy notes, open questions
+- Free CLI stays complete / offline forever by design
+- Optional metadata-export spike skipped (docs-only)
 
-1. **`docs/TEAM_LAYER.md`** (or similar) covering:
-   - **Problem / ICP:** eng + security teams that already use free `piilint` and need org-wide policy + “what’s new this week”
-   - **Non-goals:** crippling the free CLI; uploading notebooks/CSV/raw text; compliance certification
-   - **Trust boundary:** client stays local-first; only **findings metadata** may sync (entity, severity, path fingerprint, config_hash, timestamps, optional repo id) — never raw matches / never `--show-matches` values
-   - **MVP product slices (pick 1–2 for a later build sprint):** (A) shared policy packs distribution, (B) metadata history / “new findings” feed, (C) org baselines — recommend order
-   - **Auth / tenancy sketch:** GitHub org or simple workspace; no over-spec
-   - **CLI touchpoints:** e.g. `piilint login`, `piilint policy pull`, `piilint report --metadata-only` — proposals only
-   - **Open questions** for Emanuel (pricing, host vs self-host, GitHub App vs token)
-2. **Threat / privacy notes** — what we refuse to store; retention sketch
-3. **PROJECT.md / BUILD_PLAN** — link the design; mark “design in progress / done”
-4. **Optional spike (only if Lead Dev wants):** a **local** JSON “metadata export” CLI flag that proves the schema (still no network) — nice-to-have, not required
+### Blocked until Emanuel
 
-### Out of scope
-
-- Building hosted API, DB, dashboard UI, billing
-- Changing free CLI to require accounts
-- PDF redact, more locales, IDE UX (backlog)
-- Cutting a PyPI tag
-
-### Acceptance
-
-- [ ] Design doc merged on `main` with clear MVP slice recommendation + trust boundary
-- [ ] Free CLI remains complete / unc crippled by design
-- [ ] Open questions listed for Emanuel
-- [ ] Lead Dev LGTM; Local Tester docs-light OK (or N/A if docs-only); PO merge
-
-### Roles
-
-- **Developer:** draft design doc (+ optional metadata-export spike)
-- **Lead Developer:** open issue; architecture review; recommend MVP slice order
-- **Product Owner:** this scope; merge; next build sprint only after Emanuel picks slice / answers open Qs
+Open questions in TEAM_LAYER §8 + pick first build slice.
 
 ---
 
@@ -78,4 +49,4 @@ owner: Product Owner
 
 ## Later backlog
 
-IDE/PR UX; signed releases narrative; PDF redact; more locales; implement team layer **after** this design + Emanuel go on slice.
+Implement team layer after Emanuel go; IDE/PR UX; signed releases narrative; PDF redact; more locales.
