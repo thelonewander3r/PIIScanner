@@ -80,7 +80,7 @@ Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
 | 3 | Policy & noise | Done — [issue #1](https://github.com/thelonewander3r/PIIScanner/issues/1) / [PR #2](https://github.com/thelonewander3r/PIIScanner/pull/2) |
 | 4 | Baseline + staged mode | Done — [issue #3](https://github.com/thelonewander3r/PIIScanner/issues/3) / [PR #4](https://github.com/thelonewander3r/PIIScanner/pull/4) |
 | 5 | Reporters & DX polish | Done — [issue #5](https://github.com/thelonewander3r/PIIScanner/issues/5) / [PR #6](https://github.com/thelonewander3r/PIIScanner/pull/6) |
-| 6 | Distribution | **Next (Sprint 4)** — blocked on PAT `workflow` scope until ci/release YAML can push |
+| 6 | Distribution | **In progress (Sprint 4)** — [issue #7](https://github.com/thelonewander3r/PIIScanner/issues/7); blocked on PAT `workflow` scope for workflow YAML |
 | 7 | Optional NER | After launch OK |
 | 8 | Launch collateral | Not started |
 
@@ -94,12 +94,12 @@ Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
 
 ---
 
-## Sprint 4 — Distribution (NEXT)
+## Sprint 4 — Distribution (IN PROGRESS)
 
 **Goal:** Make `piilint` installable and wireable in 5 minutes — PyPI, pre-commit, GitHub Action, and green CI/release automation.
 
 **Source:** `BUILD_PLAN.md` locked decisions (CI matrix, PyPI OIDC, repo layout) + Phase 6  
-**Tracking:** GitHub issue to be opened by Lead Dev from this scope call  
+**Tracking:** [Issue #7](https://github.com/thelonewander3r/PIIScanner/issues/7)  
 **Hard blocker:** GitHub PAT must include `workflow` scope before `.github/workflows/*.yml` can be pushed. Emanuel owns unblocking.
 
 ### In scope
