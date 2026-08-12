@@ -77,7 +77,7 @@ Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
 | 1 | Corpus + engine core | Done |
 | 2 | Tabular + notebook adapters | Done |
 | 3 | Policy & noise | **Done** — [issue #1](https://github.com/thelonewander3r/PIIScanner/issues/1) closed via [PR #2](https://github.com/thelonewander3r/PIIScanner/pull/2) |
-| 4 | Baseline + staged mode | **Next (Sprint 2)** — issue pending Lead Dev |
+| 4 | Baseline + staged mode | **In progress (Sprint 2)** — [issue #3](https://github.com/thelonewander3r/PIIScanner/issues/3) |
 | 5 | Reporters & DX polish | Not started |
 | 6 | Distribution | Not started |
 | 7 | Optional NER | After launch OK |
@@ -103,7 +103,7 @@ Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
 **Goal:** Teams can adopt without fixing history first, and pre-commit only scans what is about to land.
 
 **Source:** `BUILD_PLAN.md` § Policy (baseline) + Phase 4  
-**Tracking:** GitHub issue to be opened by Lead Dev from PO scope call
+**Tracking:** [Issue #3](https://github.com/thelonewander3r/PIIScanner/issues/3)
 
 ### In scope
 
