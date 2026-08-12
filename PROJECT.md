@@ -22,15 +22,15 @@ All BUILD_PLAN phases **0–8** are on `main` (including optional NER). Next: **
 |---|---|
 | Phases 0–6, 8 | Done |
 | Phase 7 NER | Done — [#12](https://github.com/thelonewander3r/PIIScanner/issues/12) / [#13](https://github.com/thelonewander3r/PIIScanner/pull/13) |
-| First PyPI / `v0.1.0` | **Next (Sprint 7)** — no tag without Emanuel go |
+| First PyPI / `v0.1.0` | **In progress (Sprint 7)** — [issue #14](https://github.com/thelonewander3r/PIIScanner/issues/14); no tag without Emanuel go |
 
 ---
 
-## Sprint 7 — First PyPI release (NEXT)
+## Sprint 7 — First PyPI release (IN PROGRESS)
 
 **Goal:** Make `piilint` installable via PyPI (`pipx`/`uvx`/`pip`) with a clean 0.1.0 release, without surprising publishes.
 
-**Tracking:** GitHub issue to be opened by Lead Dev from this scope call  
+**Tracking:** [Issue #14](https://github.com/thelonewander3r/PIIScanner/issues/14) · branch `feature/sprint7-pypi-prep`  
 **Hard rule:** Do **not** push a `v*` tag or publish until Emanuel explicitly says go.
 
 ### In scope
