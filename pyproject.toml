@@ -49,9 +49,10 @@ dev = [
 piilint = "piilint.cli:run"
 
 [project.urls]
-Homepage = "https://github.com/E_man/piilint"
-Documentation = "https://github.com/E_man/piilint#readme"
-Issues = "https://github.com/E_man/piilint/issues"
+Homepage = "https://github.com/thelonewander3r/PIIScanner"
+Documentation = "https://github.com/thelonewander3r/PIIScanner#readme"
+Repository = "https://github.com/thelonewander3r/PIIScanner"
+Issues = "https://github.com/thelonewander3r/PIIScanner/issues"
 
 [tool.ruff]
 line-length = 100

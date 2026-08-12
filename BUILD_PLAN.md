@@ -276,7 +276,12 @@ Config file + precedence (`config.py` overlay merge so unspecified keys do not r
 
 **AC verified:** JSON schema_version 1 + masking + determinism unit-tested; SARIF 2.1.0 structure + severity mapping; console totals line shape; CLI `--format` composes with baseline/staged/fail-on; exit codes unchanged; ruff + mypy strict on `src/`; pytest + benchmark gates with real numbers.
 
-### Phase 6 — Distribution (1–2 days) — NOT STARTED
+### Phase 6 — Distribution (1–2 days) — DONE 2026-08-11
+
+CI matrix workflow (`.github/workflows/ci.yml`: ubuntu/windows/macos × 3.10/3.13 — ruff check/format, mypy via `[tool.mypy] files=src/piilint`, pytest+benchmark, `piilint --version`). Release workflow (`.github/workflows/release.yml`) builds with `uv build` / hatchling and publishes via `pypa/gh-action-pypi-publish@release/v1` with OIDC (`id-token: write`, environment `pypi`) on tag `v*` / release published — **no production tag/publish in this phase**. Root `.pre-commit-hooks.yaml` (`id: piilint`, `--staged`, default `--fail-on medium`, `pass_filenames: false`). Root composite `action.yml` (inputs: path/fail-on/format/baseline/staged/extra-args/version/sarif-file; SARIF upload left to caller). Packaging polish: `project.urls` → `thelonewander3r/PIIScanner`; README install via pipx/uvx/pip + pre-commit + Action docs + CI badge + PyPI trusted-publisher checklist.
+
+**AC verified (local):** workflows + hook + action YAML present and parse; `uv run pytest` / ruff / mypy green; `piilint --version`; hatchling build smoke. **Remote CI green** pending workflow YAML on `main` (PAT may lack `workflow` scope — Emanuel blocker). First PyPI publish deferred to explicit go.
+
 
 ### Phase 7 — Optional NER extra (1–2 days, after launch is fine) — NOT STARTED
 
