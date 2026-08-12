@@ -60,7 +60,7 @@ Disclaimer (required in all user-facing docs): *piilint helps you find sensitive
 | R4 | Exit codes are public API | `0` clean / below threshold · `1` findings ≥ fail-on · `2` config/usage error |
 | R5 | Precision over recall | High-severity precision ≥ 0.95; core recall ≥ 0.85 (CI gate) |
 | R6 | Windows first-class | pathlib, UTF-8 replace, BOM/CRLF |
-| R7 | Chassis boundary | adapters / findings / reporters do not import recognizers |
+| R7 | Chassis boundary | adapters / findings / baseline / reporters do not import recognizers |
 | R8 | Small locked dependency set | Ask before adding deps |
 | R9 | Config precedence | CLI > `piilint.toml` > `[tool.piilint]` > defaults |
 | R10 | Noise controls | `.piiignore`, inline suppressions, allowlists, test-data downweight, baseline |
@@ -76,58 +76,55 @@ Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
 | 0 | Bootstrap | Done |
 | 1 | Corpus + engine core | Done |
 | 2 | Tabular + notebook adapters | Done |
-| 3 | Policy & noise | **Done** — [issue #1](https://github.com/thelonewander3r/PIIScanner/issues/1) closed via [PR #2](https://github.com/thelonewander3r/PIIScanner/pull/2) |
-| 4 | Baseline + staged mode | **Implemented on branch** (Sprint 2) — [issue #3](https://github.com/thelonewander3r/PIIScanner/issues/3); awaiting Lead Dev review / PR |
-| 5 | Reporters & DX polish | Not started |
+| 3 | Policy & noise | Done — [issue #1](https://github.com/thelonewander3r/PIIScanner/issues/1) / [PR #2](https://github.com/thelonewander3r/PIIScanner/pull/2) |
+| 4 | Baseline + staged mode | Done — [issue #3](https://github.com/thelonewander3r/PIIScanner/issues/3) / [PR #4](https://github.com/thelonewander3r/PIIScanner/pull/4) |
+| 5 | Reporters & DX polish | **Next (Sprint 3)** |
 | 6 | Distribution | Not started |
 | 7 | Optional NER | After launch OK |
 | 8 | Launch collateral | Not started |
 
 ---
 
-## Sprint 1 — Policy & noise (COMPLETE)
+## Sprint 2 — Baseline + staged (COMPLETE)
 
-**Tracking:** [Issue #1](https://github.com/thelonewander3r/PIIScanner/issues/1) (closed)  
-**Merged:** [PR #2](https://github.com/thelonewander3r/PIIScanner/pull/2) → `main`
-
-### Definition of done
-
-- [x] Phase 3 acceptance checklist met
-- [x] Lead Developer review / approve (47 pytest; ruff/mypy; benchmark gates)
-- [x] PO cleanup; PR merged to `main`
+**Tracking:** [Issue #3](https://github.com/thelonewander3r/PIIScanner/issues/3) (closed)  
+**Merged:** [PR #4](https://github.com/thelonewander3r/PIIScanner/pull/4) → `main`  
+**Verified:** 60 pytest; mypy; benchmark gates; ruff E501 cleaned before merge
 
 ---
 
-## Sprint 2 — Baseline + staged (IN REVIEW)
+## Sprint 3 — Reporters & DX polish (NEXT)
 
-**Goal:** Teams can adopt without fixing history first, and pre-commit only scans what is about to land.
+**Goal:** Machine-readable outputs for CI/Security tab, plus console polish — without breaking deterministic, masked-by-default reporting.
 
-**Source:** `BUILD_PLAN.md` § Policy (baseline) + Phase 4  
-**Tracking:** [Issue #3](https://github.com/thelonewander3r/PIIScanner/issues/3)
+**Source:** `BUILD_PLAN.md` § Output spec + Phase 5 + reporters layout  
+**Tracking:** GitHub issue to be opened by Lead Dev from this scope call
 
 ### In scope
 
-1. **Baseline command:** `piilint baseline . -o piilint-baseline.json` — fingerprint current findings
-2. **Baseline subtract:** `piilint . --baseline piilint-baseline.json` — report **new findings only**
-3. **Fingerprint design:** SHA-256(relative path, entity, normalized-value hash, occurrence index) — deliberately excludes line numbers so ordinary edits do not resurrect old findings; document the tradeoff
-4. **`--staged`:** scan only git-staged files (pre-commit friendly); implement via `gitutil` as sketched in BUILD_PLAN layout
-5. **Tests:** unit tests for fingerprint stability (line-number independence), baseline subtract, staged file selection; benchmark gates remain green
-6. **Docs:** README section for baseline + staged; mark Phase 4 done in `BUILD_PLAN.md` when AC met
+1. **`--format json`** — stable versioned schema (`schema_version: 1`): tool version, config hash, per-finding records (masked sample + value hash, never raw PII), summary block; byte-stable key order / sort
+2. **`--format sarif`** — valid SARIF 2.1.0 suitable for `github/codeql-action/upload-sarif` (GitHub Security tab)
+3. **Console polish** — Rich summary grouped by file → findings table (severity color, entity, location, masked sample, confidence) → totals line (`N high · M medium · K low — F files scanned in Ts`)
+4. **CLI wiring** — `--format {console,json,sarif}` (console default); formats compose with `--baseline`, `--staged`, `--fail-on`
+5. **Chassis** — implement under `src/piilint/reporters/` (`json_.py`, `sarif.py`; extend `console.py`); no recognizer imports in reporters
+6. **Tests** — schema/fixture tests for JSON; SARIF structural validation (or golden with stable fields); masking regression (no raw corpus PII in any format); console snapshot or key substring asserts; benchmark gates stay green
+7. **Docs** — README examples for JSON/SARIF; mark Phase 5 done in `BUILD_PLAN.md` when AC met
 
-### Out of scope (Sprint 2)
+### Out of scope (Sprint 3)
 
-- JSON / SARIF reporters (Phase 5)
-- GitHub Action packaging / pre-commit hook publish (Phase 6)
+- PyPI / pre-commit hook publish / GitHub Action packaging (Phase 6) — SARIF should be *usable* by upload-sarif, but shipping `action.yml` waits
 - NER extra (Phase 7)
-- Changing Phase 3 policy behavior unless a baseline bug forces a tiny fix
+- `--show-matches` unmask behavior beyond what BUILD_PLAN already specifies (if missing, add only the documented refuse-when-`CI=true` rule)
+- New dependencies without Lead Dev / Emanuel approval (prefer stdlib + existing stack)
 
-### Acceptance (Sprint 2 done when)
+### Acceptance (Sprint 3 done when)
 
-- [x] `piilint baseline` writes a stable, versioned baseline file
-- [x] Scan with `--baseline` suppresses known findings and surfaces only new ones
-- [x] Fingerprints ignore line numbers (documented + tested)
-- [x] `--staged` limits scan to staged paths; clear error if not in a git repo / nothing staged as appropriate
-- [x] `uv run pytest` green; ruff + mypy strict clean; benchmark gates hold with real numbers
+- [ ] `--format json` emits schema_version 1, masked-only findings, deterministic output
+- [ ] `--format sarif` is valid SARIF 2.1.0 and maps severities/locations usefully
+- [ ] Console matches the Output spec summary shape
+- [ ] Exit codes unchanged (0/1/2); reporters never turn exceptions into exit 1
+- [ ] `uv run pytest` green; ruff + mypy strict on `src/`; benchmark gates hold with real numbers
+- [ ] No recognizer imports in `reporters/`
 - [ ] Lead Developer review approved
 - [ ] PO cleanup; PR to `main`
 
@@ -161,5 +158,5 @@ Technical source of truth: `BUILD_PLAN.md`. Sprint/scope board: this file. Phase
 
 ## Later sprints (preview)
 
-- **Sprint 3 — Reporters & DX (Phase 5):** JSON (schema v1) + SARIF 2.1.0, console polish
-- **Sprint 4 — Distribution (Phase 6):** PyPI, pre-commit hook, GitHub Action, release workflow
+- **Sprint 4 — Distribution (Phase 6):** PyPI, pre-commit hook, GitHub Action, release workflow (needs `workflow` PAT scope)
+- **Sprint 5 — Optional NER (Phase 7):** `piilint[ner]` + `setup-ner` (after launch OK)
