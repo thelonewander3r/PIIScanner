@@ -55,6 +55,8 @@ def _supported(path: Path) -> str | None:
         return "notebook"
     if suffix == ".parquet":
         return "parquet"
+    if suffix in {".xlsx", ".xlsm"}:
+        return "xlsx"
     if _TEXT.supports(path):
         return "text"
     return None
@@ -455,6 +457,61 @@ def _redact_parquet_file(
     return total
 
 
+def _redact_xlsx_file(
+    path: Path,
+    dest: Path,
+    *,
+    registry: RecognizerRegistry,
+    config: Config,
+    rel_path: str,
+) -> int:
+    """Rewrite string cells into a new workbook under ``dest`` (stretch Sprint 11)."""
+    try:
+        from openpyxl import load_workbook  # type: ignore[import-untyped]
+    except ImportError as exc:
+        raise RedactError(
+            'Excel redact requires piilint[office]. Install with: pip install "piilint[office]"'
+        ) from exc
+
+    try:
+        wb = load_workbook(path)
+    except OSError as exc:
+        raise RedactError(f"Invalid workbook {rel_path}: {exc}") from exc
+
+    total = 0
+    for sheet in wb.worksheets:
+        headers: dict[int, str] = {}
+        for row in sheet.iter_rows():
+            for cell in row:
+                value = cell.value
+                if value is None or isinstance(value, (int, float, bool)):
+                    # Keep numbers/bools unchanged.
+                    continue
+                text = str(value).strip() if value is not None else ""
+                if not text:
+                    continue
+                if cell.row == 1:
+                    headers[cell.column] = text
+                context = headers.get(cell.column) or sheet.title
+                redacted, n = redact_plain_text(
+                    text,
+                    registry=registry,
+                    config=config,
+                    rel_path=rel_path,
+                    context_key=context,
+                )
+                if n:
+                    cell.value = redacted
+                    total += n
+
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        wb.save(dest)
+    except OSError as exc:
+        raise RedactError(f"Failed to write workbook {rel_path}: {exc}") from exc
+    return total
+
+
 def _safe_out_path(out_root: Path, rel: str) -> Path:
     """Resolve destination under out_root; refuse escapes."""
     # Normalize rel to forbid absolute / drive / .. escape
@@ -524,6 +581,10 @@ def redact_tree(
                 )
             elif kind == "parquet":
                 n = _redact_parquet_file(
+                    file_path, dest, registry=registry, config=config, rel_path=rel
+                )
+            elif kind == "xlsx":
+                n = _redact_xlsx_file(
                     file_path, dest, registry=registry, config=config, rel_path=rel
                 )
             else:

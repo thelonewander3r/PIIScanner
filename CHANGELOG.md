@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Optional `piilint[office]` (`openpyxl` + `pypdf`): scan `.xlsx`/`.xlsm` and PDF **embedded text** (no OCR); missing extra skips those files with a stderr hint.
+- `piilint redact` stretch: cleaned `.xlsx` copies. PDF redact deferred.
 - `piilint redact PATH -o OUT_DIR` ? write cleaned **copies** with PII spans rewritten via existing `mask_value` (text + json/jsonl + csv/tsv; no in-place; no new base deps).
 - Example org policy packs under `examples/policies/` (`strict-ci`, `data-eng`, `open-source-lib`) + disclaimer README.
 - `piilint redact` now also cleans **`.ipynb`** (source + outputs) and **`.parquet`** string columns (Sprint 10).
