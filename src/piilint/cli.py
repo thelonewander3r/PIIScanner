@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 import typer
 from rich.console import Console
@@ -14,7 +15,7 @@ from piilint.config import ConfigError, load_config
 from piilint.engine import ScanResult, scan_path
 from piilint.findings import Severity
 from piilint.gitutil import GitError, find_repo_root, staged_files
-from piilint.reporters import render_console
+from piilint.reporters import render_console, render_json, render_sarif
 
 app = typer.Typer(
     name="piilint",
@@ -30,12 +31,18 @@ app = typer.Typer(
 
 SEVERITY_RANK = {Severity.LOW: 1, Severity.MEDIUM: 2, Severity.HIGH: 3}
 
+OutputFormat = Literal["console", "json", "sarif"]
+
 
 def _fail_on_rank(name: str) -> int:
     mapping = {"never": 99, "low": 1, "medium": 2, "high": 3}
     if name not in mapping:
         raise typer.BadParameter("fail-on must be one of: high, medium, low, never")
     return mapping[name]
+
+
+def _ci_truthy() -> bool:
+    return os.environ.get("CI", "").strip().lower() in {"1", "true", "yes"}
 
 
 def _resolve_staged_only_paths(target: Path) -> tuple[list[Path], int]:
@@ -69,10 +76,28 @@ def _run_scan(
     exclude: list[str] | None,
     baseline: Path | None,
     staged: bool,
+    output_format: OutputFormat,
+    show_matches: bool,
 ) -> None:
     if not path.exists():
         typer.secho(f"Path not found: {path}", fg=typer.colors.RED, err=True)
         raise typer.Exit(2)
+
+    if show_matches:
+        if output_format != "console":
+            typer.secho(
+                "--show-matches applies only to --format console",
+                fg=typer.colors.RED,
+                err=True,
+            )
+            raise typer.Exit(2)
+        if _ci_truthy():
+            typer.secho(
+                "--show-matches is refused when CI=true (local triage only)",
+                fg=typer.colors.RED,
+                err=True,
+            )
+            raise typer.Exit(2)
 
     try:
         config = load_config(
@@ -125,7 +150,13 @@ def _run_scan(
             elapsed_seconds=result.elapsed_seconds,
         )
 
-    render_console(result, console=Console())
+    if output_format == "json":
+        typer.echo(render_json(result, config), nl=False)
+    elif output_format == "sarif":
+        typer.echo(render_sarif(result), nl=False)
+    else:
+        render_console(result, console=Console(), show_matches=show_matches)
+
     actionable = [f for f in result.findings if SEVERITY_RANK[f.severity] >= threshold]
     raise typer.Exit(1 if actionable else 0)
 
@@ -183,7 +214,29 @@ def scan_cmd(
             help="Scan only git-staged files (Added/Copied/Modified/Renamed).",
         ),
     ] = False,
+    output_format: Annotated[
+        str,
+        typer.Option(
+            "--format",
+            help="Output format: console (default), json, or sarif.",
+        ),
+    ] = "console",
+    show_matches: Annotated[
+        bool,
+        typer.Option(
+            "--show-matches",
+            help="Unmask Sample column on console (local triage only; refused when CI=true).",
+        ),
+    ] = False,
 ) -> None:
+    fmt = output_format.lower().strip()
+    if fmt not in {"console", "json", "sarif"}:
+        typer.secho(
+            "--format must be one of: console, json, sarif",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(2)
     _run_scan(
         path,
         fail_on=fail_on,
@@ -193,6 +246,8 @@ def scan_cmd(
         exclude=exclude,
         baseline=baseline,
         staged=staged,
+        output_format=fmt,  # type: ignore[arg-type]
+        show_matches=show_matches,
     )
 
 
