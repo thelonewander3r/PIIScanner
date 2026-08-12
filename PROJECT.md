@@ -51,7 +51,7 @@ Disclaimer: *piilint helps you find sensitive data before it leaks. It is a dete
 | 5 | Reporters & DX | Done — [#5](https://github.com/thelonewander3r/PIIScanner/issues/5) / [#6](https://github.com/thelonewander3r/PIIScanner/pull/6) |
 | 6 | Distribution | **Done** — [#7](https://github.com/thelonewander3r/PIIScanner/issues/7) / [#8](https://github.com/thelonewander3r/PIIScanner/pull/8) + [#9](https://github.com/thelonewander3r/PIIScanner/pull/9) |
 | 7 | Optional NER | After launch OK |
-| 8 | Launch collateral | **Next (Sprint 5)** |
+| 8 | Launch collateral | **In progress (Sprint 5)** — [issue #10](https://github.com/thelonewander3r/PIIScanner/issues/10) |
 
 ---
 
@@ -63,12 +63,12 @@ Disclaimer: *piilint helps you find sensitive data before it leaks. It is a dete
 
 ---
 
-## Sprint 5 — Launch collateral (NEXT)
+## Sprint 5 — Launch collateral (IN PROGRESS)
 
 **Goal:** Make the public repo look launch-ready so first adopters succeed in five minutes.
 
 **Source:** `BUILD_PLAN.md` Phase 8  
-**Tracking:** GitHub issue to be opened by Lead Dev from this scope call
+**Tracking:** [Issue #10](https://github.com/thelonewander3r/PIIScanner/issues/10)
 
 ### In scope
 
