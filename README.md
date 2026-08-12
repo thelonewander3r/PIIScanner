@@ -289,6 +289,7 @@ piilint . --ner               # enable PERSON + ADDRESS for this run
 - Without `[ner]` installed, normal scans are unchanged; `piilint . --ner` exits **2** with an install hint.
 - With `[ner]` but no model, `--ner` exits **2** asking you to run `setup-ner`.
 - Config toggles `entities.person` / `entities.address` default to **false**; `--ner` enables both for the run.
+- Enabling PERSON/ADDRESS via config alone still requires the `[ner]` extra + model (same clear exit **2** guidance as `--ner` if they are missing).
 - Only English (`en_core_web_sm`) is supported in this phase. No scan-time network — model download is setup-only.
 
 ---
