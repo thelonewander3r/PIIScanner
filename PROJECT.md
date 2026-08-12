@@ -15,53 +15,27 @@ owner: Product Owner
 
 ## Status
 
-`piilint` **0.1.0** is on PyPI. Sprint 9–10 redact work is on `main` (text/JSON/CSV/notebook/parquet + policy packs).
+`piilint` **0.1.0** is on PyPI. Sprints 9–11 on `main`: redact (text/JSON/CSV/notebook/parquet) + policy packs + optional **xlsx/PDF** via `piilint[office]`.
 
-**Next (Emanuel 2026-08-12):** Sprint 11 in progress ([#24](https://github.com/thelonewander3r/PIIScanner/issues/24)) — xlsx + PDF via `piilint[office]`.  
 **Hold:** no `v0.2.0` / prod `v*` tags without Emanuel’s explicit go.
 
 ---
 
-## Sprint 11 — xlsx + PDF adapters (IN PROGRESS)
+## Sprint 11 — xlsx + PDF adapters (DONE)
 
-**Goal:** Scan (and where practical, redact) the Office/PDF files data and ops teams actually pass around — without bloating the default install or adding OCR complexity.
+**Merged:** [PR #25](https://github.com/thelonewander3r/PIIScanner/pull/25) · closes [#24](https://github.com/thelonewander3r/PIIScanner/issues/24)
 
-**Tracking:** [Issue #24](https://github.com/thelonewander3r/PIIScanner/issues/24) · `piilint[office]` = openpyxl + pypdf  
-**Branch:** off `main` → PR → LGTM → PO merge  
-**Version:** land on `main` only; **no tag** unless Emanuel goes.
+### Shipped
 
-### In scope
+- Optional `piilint[office]` (openpyxl + pypdf); base wheel stays lean
+- `.xlsx` / `.xlsm` scan + cleaned-copy redact for string cells
+- PDF **text** scan only (no OCR); blank/image PDFs skip cleanly
+- Synthetic corpus + unit tests; CI optional office smoke; package-smoke still without office
 
-1. **xlsx scan adapter** — `.xlsx` (and `.xlsm` if cheap); emit findings from cell text (and optionally sheet names / headers). Preserve chassis boundaries (adapters → scan units → recognizers).
-2. **PDF scan adapter** — extract **embedded text** only (no OCR / no images). Document that scanned-image PDFs won’t yield text. Clear skip/warn if a file has no extractable text.
-3. **Optional extras** — keep base wheel lean. Prefer something like `piilint[office]` (or `[xlsx]` / `[pdf]`) with pinned deps (e.g. openpyxl / pypdf — Lead Dev picks). Missing extra → clear exit-2 / skip message, not a hard crash mid-walk if possible (document behavior).
-4. **Redact (stretch, same sprint if it fits)** — `piilint redact` cleaned `.xlsx` copies for string cells (mirror parquet/csv story). **PDF redact** only if Lead Dev judges it safe/simple in this sprint; otherwise explicit follow-up (rewriting PDFs is easy to get wrong).
-5. **Corpus + tests** — synthetic xlsx + PDF fixtures with fake PII; hard negatives; no real customer data; CI gate still holds for core entities.
-6. **Docs** — README supported formats + install extras; disclaimer unchanged (not compliance); BUILD_PLAN “more formats” note updated.
-7. **Windows-first** — path + encoding behavior sane on Windows 11.
+### Follow-ups
 
-### Out of scope
-
-- docx (unless trivial piggyback — default **no**)
-- OCR / image-only PDFs
-- Cutting a PyPI tag
-- Paid team / metadata layer
-- Locales / national ID packs
-
-### Acceptance
-
-- [ ] `piilint` with the office extra finds PII in synthetic `.xlsx` and text-based `.pdf`
-- [ ] Base install stays lean (extra documented; no surprise heavy deps)
-- [ ] Tests + CI green (package-smoke still passes without office extra)
-- [ ] README documents install + limitations (no OCR)
-- [ ] Lead Dev LGTM; PO merge
-- [ ] Redact xlsx either shipped or explicitly deferred in the PR body / PROJECT note
-
-### Roles
-
-- **Developer:** feature branch; report AC + any deferred redact
-- **Lead Developer:** open issue; pick deps/extra layout; review architecture
-- **Product Owner:** this scope; merge; hold tags
+- PDF redact (deferred — rewrite risk)
+- docx, OCR, locales, paid team/metadata layer
 
 ---
 
@@ -74,4 +48,4 @@ owner: Product Owner
 
 ## Later backlog
 
-Team metadata history (paid wedge), locales, IDE/PR UX, signed releases narrative; PDF redact if deferred; docx.
+Team metadata history (paid wedge), locales, IDE/PR UX, signed releases narrative; PDF redact; docx.
