@@ -8,96 +8,70 @@ owner: Product Owner
 # piilint — Project management
 
 **GitHub:** https://github.com/thelonewander3r/PIIScanner  
-**Local:** `C:\Users\E_man\Documents\Projects\PIIScanner2`  
-**Technical truth:** [`BUILD_PLAN.md`](./BUILD_PLAN.md) · **Release runbook:** [`docs/RELEASE.md`](./docs/RELEASE.md)
+**PyPI:** https://pypi.org/project/piilint/ (`0.1.0`)  
+**Local:** `C:\Users\E_man\Documents\Projects\PIIScanner2`
 
 ---
 
 ## Status
 
-Phases **0–8** on `main`. **`piilint` `0.1.0` is on [PyPI](https://pypi.org/p/piilint)** (tag `v0.1.0`, OIDC release green, 2026-08-12). Sprint 8 hardening + smoke fix landed ([#16](https://github.com/thelonewander3r/PIIScanner/issues/16) / [#17](https://github.com/thelonewander3r/PIIScanner/pull/17)).
+`piilint` **0.1.0** is on PyPI. Phases 0–8 + release hardening done. Post-release docs done (#18/#19).
 
-**Next:** post-publish docs ([#18](https://github.com/thelonewander3r/PIIScanner/issues/18)); then business-value backlog below (e.g. `--redact`) unless Emanuel reorders.  
-**Hold:** further prod `v*` tags still need Emanuel’s explicit go.
+**Next (Emanuel 2026-08-12):** Sprint 9 — `--redact` + example org policy packs.
 
 ---
 
-## Sprint 8 — Release hardening (DONE)
+## Sprint 9 — Redact + example policy packs (NEXT)
 
-**Goal:** Prove the artifact strangers install — not only that `uv sync --extra dev` tests pass on a checkout.
+**Goal:** (1) Let users write cleaned copies of files with PII masked/replaced, not only detect. (2) Ship shareable example `piilint.toml` policy packs teams can copy.
 
-**Tracking:** [Issue #16](https://github.com/thelonewander3r/PIIScanner/issues/16) (closed) · smoke fix [#17](https://github.com/thelonewander3r/PIIScanner/pull/17) · **`v0.1.0` published 2026-08-12**.  
-Further prod tags still need Emanuel go.
+**Tracking:** issue to be opened by Lead Dev from this scope call  
+**Branch:** off `main` → PR → LGTM → PO merge (no direct-to-main)  
+**Version:** land on `main` as post-0.1.0 work; **do not** cut `v0.2.0` unless Emanuel explicitly goes.
 
-### In scope
+### A. `--redact` (primary)
 
-1. **CI: package build** — job (or step) that runs `uv build` on at least ubuntu + windows; upload/artifacts optional; fail on build errors
-2. **CI: install-from-wheel smoke** — create a clean venv, `pip install dist/*.whl` (no editable, no `--extra dev`), run `piilint --version`, scan `tests/corpus/text` (or a tiny fixture), assert exit 1 + masked output (no raw PII)
-3. **Optional NER smoke (CI, marked/extra)** — one job with `piilint[ner]` + `setup-ner` + `--ner` on synthetic prose; allow skipping if too heavy, but document; must not break default matrix
-4. **TestPyPI path (docs + optional dry-run)** — document trusted publisher for TestPyPI *or* a maintainer script; prefer a dry-run upload only with Emanuel go (separate from prod tag)
-5. **Action / pre-commit smoke** — minimal workflow or documented manual check that composite `action.yml` runs on a sample path; pre-commit hook config snippet validated
-6. **Docs** — short “How we know releases are good” section in `docs/RELEASE.md`; mark Sprint 8 done in PROJECT/BUILD_PLAN notes when AC met
+1. **CLI:** something like `piilint redact PATH -o OUT_DIR` (exact UX Lead Dev / Developer can refine; must be documented). Prefer **write copies** into an output directory — **never overwrite sources by default**. Optional `--in-place` only with an explicit scary flag if included at all (default off; PO preference: skip in-place for v1 of redact).
+2. **Behavior:** for supported adapters (start with **text + json/jsonl + csv/tsv**; notebooks/parquet if straightforward in same sprint, else follow-up). Replace matched spans with the same masking style as findings (or stable placeholders like `[EMAIL]` / last-4 cards) so output is useful and deterministic.
+3. **Deps:** prefer staying lean. If `presidio-anonymizer` is needed, put it behind an optional extra (e.g. `piilint[redact]`) — don’t bloat the base wheel. Deterministic recognizers can redact without Presidio; NER redact may require the ner/redact extra — document clearly.
+4. **Safety:** no raw PII in logs/errors; refuse `--show-matches`-style unmask when writing; Windows path-safe; exit codes consistent (2 on usage/config).
+5. **Tests:** unit tests for rewrite correctness on synthetic fixtures; assert output contains no raw corpus PII; round-trip scan of redacted output finds fewer/no findings for those entities.
+6. **Docs:** README section + examples; update BUILD_PLAN post-MVP note to “in progress/done.”
 
-### Out of scope
+### B. Example org policy packs (same sprint)
 
-- Production `v0.1.0` tag (after this + Emanuel go)
-- New detection features / NER quality campaigns
-- Paid team layer
+1. **Layout:** e.g. `examples/policies/` with a short README explaining copy-to-repo-root as `piilint.toml` (or include path docs).
+2. **Packs (at least 3):** 
+   - `strict-ci.toml` — fail on medium+, IP off, tight min_confidence
+   - `data-eng.toml` — tabular-friendly excludes for fixtures, allowlist example.com-style already handled by downweight; document baseline pairing
+   - `open-source-lib.toml` — noisier codebases: IP off, higher min_confidence, sample allowlist domains
+3. **Hard rule:** no pack may claim GDPR/HIPAA/PCI compliance. Disclaimer in the policies README.
+4. **Wire from main README** — one paragraph + links.
+
+### Out of scope (Sprint 9)
+
+- Paid team layer / metadata history SaaS
+- New file formats (xlsx/PDF)
+- Cutting a PyPI release tag (ask Emanuel after merge if we should ship 0.2.0)
+- In-place overwrite as the default path
 
 ### Acceptance
 
-- [x] CI proves build + clean-install smoke on ≥2 OSes
-- [x] Default (no-ner) smoke is required green on PRs
-- [x] RELEASE.md updated with hardening + TestPyPI notes
-- [x] Lead Dev LGTM; PO merge; first prod tag cut after Emanuel go (`v0.1.0`)
+- [ ] `redact` command writes cleaned copies to `-o` dir; sources untouched by default
+- [ ] Tests prove masking and no raw PII in outputs
+- [ ] Optional extra decision documented (base vs `[redact]`)
+- [ ] ≥3 example policy packs + policies README + main README links
+- [ ] pytest / ruff / mypy / package-smoke still green
+- [ ] Lead Dev LGTM; PO merge
+
+### Roles
+
+- **Developer:** implement on feature branch; report AC
+- **Lead Developer:** open issue, architecture (redact design + extra), review
+- **Product Owner:** this scope; merge; ask Emanuel about 0.2.0 tag after
 
 ---
 
-## Business value — what we have vs what’s missing
+## Later backlog (unchanged)
 
-### What already delivers value (developer / small team)
-
-| Capability | Why it matters |
-|---|---|
-| Local-first scan, no upload | Trust barrier for real data samples |
-| Notebook + tabular adapters | Catches the classic `df.head()` leak |
-| Pre-commit + `--staged` + GHA + SARIF | Fits how eng teams already gate merges |
-| Baseline | Adopt without boiling the ocean |
-| Policy / allowlists / suppressions | Noise control so it doesn’t get turned off |
-| Precision-first + CI benchmark gate | Credibility for a security-adjacent tool |
-| Optional NER | Names/addresses when someone opts in |
-
-### Gaps that block or weaken *business* value
-
-Ordered by “unlocks paying / serious org adoption” vs nice-to-have:
-
-1. ~~**Public install + proven release path**~~ — **done** (`0.1.0` on PyPI). Remaining adoption work is product (below), not packaging.
-2. **`--redact` / clean-copy export** — BUILD_PLAN’s most-requested post-MVP; businesses need “fix the leak,” not only “find it.”
-3. **Org policy packs** — shareable `piilint.toml` / allowlists / severity maps as versioned artifacts (even as a folder of examples before a SaaS).
-4. **Findings-metadata history (team layer)** — trend “new PII introduced this week” without centralizing raw files; this is the paid wedge in BUILD_PLAN.
-5. **More formats teams actually ship** — xlsx, PDF (and later docx); data/ops orgs live here.
-6. **Locale coverage** — non-US national IDs, phone regions beyond US default; otherwise “works for US startups” only.
-7. **Enterprise trust packaging** — signed releases/provenance, support channel, SOC2-friendly story (“we never see your data”), clear severity→ticket mapping examples for Jira/ServiceNow (docs/integrations, not necessarily product).
-8. **IDE / PR review UX** — inline annotations or richer PR comments from SARIF; reduces “another CLI to remember.”
-9. **Performance / scale story** — published numbers for large parquet/CSV; SLAs for CI minute cost.
-10. **Sibling chassis (later)** — dataset diffing; don’t build until piilint is adopted.
-
-### Recommended sequencing (PO view)
-
-| When | What |
-|---|---|
-| **Now** | Post-`0.1.0` docs ([#18](https://github.com/thelonewander3r/PIIScanner/issues/18)); then `--redact` MVP + example org policy packs |
-| **Right after** | Example org policy packs (docs/examples); locale / format opportunistic |
-| **First paid wedge** | Team metadata history + shared policy (design before build) |
-| **Parallel opportunistic** | xlsx/PDF adapters; locale packs |
-| **Defer** | Full SaaS UI, speculative chassis reuse |
-
----
-
-## How we work
-
-1. Product Owner owns scope (this file)  
-2. Lead Dev ↔ Developer via GitHub issues + DMs  
-3. Developer on feature branch  
-4. Lead Dev reviews  
-5. Product Owner merges; next package / hold for Emanuel go on tags  
+Team metadata history (paid wedge), xlsx/PDF, locales, IDE/PR UX, signed releases narrative.
