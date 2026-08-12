@@ -16,6 +16,8 @@ Local-first PII scanner for the files developers actually commit and send — no
 
 ### 1. Install
 
+**Once published to PyPI** (after `v0.1.0` — not yet released):
+
 ```bash
 # recommended for CLI use
 pipx install piilint
@@ -25,7 +27,7 @@ uvx piilint --version
 pip install piilint
 ```
 
-Until the first PyPI release is cut, install from git or a local checkout:
+**Until then**, install from git or a local checkout (package is **not** on PyPI yet):
 
 ```bash
 pipx install git+https://github.com/thelonewander3r/PIIScanner.git
@@ -262,17 +264,26 @@ jobs:
 
 ### PyPI trusted publisher checklist (maintainer)
 
-Before the first real publish (tag `v0.1.0` only with explicit go):
+Full tag-day steps: [`docs/RELEASE.md`](./docs/RELEASE.md).  
+**Hard stop:** tag `v0.1.0` only after **Emanuel’s explicit go**. No long-lived PyPI API tokens.
 
-1. Create the PyPI project `piilint` (or register a pending publisher that creates it on first upload).
-2. On PyPI → Publishing → Trusted publishers, add a GitHub publisher:
+**Emanuel-only (PyPI UI)**
+
+1. Create project `piilint` **or** register a **pending** trusted publisher (preferred; creates the project on first upload).
+2. PyPI → Publishing → Trusted publishers → GitHub:
    - **Owner:** `thelonewander3r`
    - **Repository:** `PIIScanner`
-   - **Workflow name:** `release.yml`
-   - **Environment name:** `pypi` (must match the workflow `environment:`)
-3. In GitHub repo Settings → Environments, create environment **`pypi`** (optional protection rules / required reviewers recommended for production tags).
+   - **Workflow name:** `release.yml` (filename only)
+   - **Environment name:** `pypi` (must match `release.yml`)
+
+**Emanuel-only (GitHub UI)**
+
+3. Repo Settings → Environments → create **`pypi`** (recommend required reviewers / wait timer).
+
+**Then (after Emanuel go)**
+
 4. Do **not** store a PyPI API token in Actions secrets for this flow.
-5. Cut a tag only when ready: `git tag v0.1.0 && git push origin v0.1.0` (triggers release workflow).
+5. From release commit on `main`: `git tag v0.1.0 && git push origin v0.1.0` → watch Actions **Release** → verify `uvx piilint --version` / `pipx install piilint`.
 
 ---
 
@@ -296,13 +307,14 @@ piilint . --ner               # enable PERSON + ADDRESS for this run
 
 ## Status
 
-Phases 0–8 are complete, including **Phase 7 optional NER** (`piilint[ner]`, `setup-ner`, `--ner` for PERSON/ADDRESS). Deterministic recognizers, text + tabular + notebook adapters, console / JSON / SARIF reporters, synthetic benchmark corpus + CI gate, config/policy/noise controls, baseline subtraction, `--staged` mode, CI/release workflows, pre-commit hook, GitHub Action, and launch docs. First production PyPI publish is intentionally deferred until maintainer go + OIDC publisher setup.
+Phases 0–8 are complete, including **Phase 7 optional NER** (`piilint[ner]`, `setup-ner`, `--ner` for PERSON/ADDRESS). Deterministic recognizers, text + tabular + notebook adapters, console / JSON / SARIF reporters, synthetic benchmark corpus + CI gate, config/policy/noise controls, baseline subtraction, `--staged` mode, CI/release workflows, pre-commit hook, GitHub Action, and launch docs. Sprint 7 prep targets first PyPI `0.1.0`; package is **not published** until Emanuel go + `v0.1.0` tag + OIDC trusted publisher (see [`docs/RELEASE.md`](./docs/RELEASE.md)).
 
 ## Contributing & security
 
 - Contributors: see [`CONTRIBUTING.md`](./CONTRIBUTING.md)
 - Vulnerability reports: see [`SECURITY.md`](./SECURITY.md)
 - Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
+- Maintainer release runbook: [`docs/RELEASE.md`](./docs/RELEASE.md)
 
 ## License
 

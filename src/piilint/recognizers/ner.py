@@ -58,13 +58,9 @@ def spacy_model_available(model: str = SPACY_MODEL) -> bool:
 def require_ner_ready(model: str = SPACY_MODEL) -> None:
     """Raise NerDependencyError / NerModelError with clear user-facing messages."""
     if not ner_deps_available():
-        raise NerDependencyError(
-            f"NER requires the optional extra. Install with: {_INSTALL_HINT}"
-        )
+        raise NerDependencyError(f"NER requires the optional extra. Install with: {_INSTALL_HINT}")
     if not spacy_model_available(model):
-        raise NerModelError(
-            f"spaCy model {model!r} is not installed; {_SETUP_HINT}"
-        )
+        raise NerModelError(f"spaCy model {model!r} is not installed; {_SETUP_HINT}")
 
 
 def _model_wheel_url(model: str) -> str:
@@ -119,18 +115,17 @@ def download_spacy_model(model: str = SPACY_MODEL) -> None:
 
     # Last resort: spaCy's own downloader (needs pip in the env).
     try:
-        from spacy.cli import download as spacy_download  # type: ignore[attr-defined]
+        import spacy.cli as spacy_cli
 
         # Avoid interactive prompts; download() may still shell out to pip.
         os.environ.setdefault("SPACY_WARNING_IGNORE", "W008")
-        spacy_download(model)
+        download = getattr(spacy_cli, "download")  # noqa: B009
+        download(model)
         return
     except Exception as exc:  # noqa: BLE001
         errors.append(f"spacy.cli.download: {exc}")
 
-    raise RuntimeError(
-        f"Could not install spaCy model {model!r}. Tried: " + " | ".join(errors)
-    )
+    raise RuntimeError(f"Could not install spaCy model {model!r}. Tried: " + " | ".join(errors))
 
 
 class _SharedNerEngine:

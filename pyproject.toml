@@ -9,7 +9,7 @@ description = "Local-first PII scanner for notebooks, CSV, JSON, Parquet, and so
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
-authors = [{ name = "Emanuel" }]
+authors = [{ name = "Emanuel Lopez" }]
 keywords = ["pii", "privacy", "scanner", "security", "pre-commit"]
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -23,6 +23,7 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Topic :: Security",
+  "Topic :: Software Development :: Quality Assurance",
 ]
 dependencies = [
   "typer>=0.12",
@@ -39,7 +40,7 @@ dependencies = [
 ner = [
     "presidio-analyzer>=2.2.355,<3",
     "spacy!=3.7.0,>=3.7.2,<3.8.14",
-]  # Phase 7: presidio-analyzer + spaCy
+]  # optional: Presidio + spaCy PERSON/ADDRESS (piilint[ner])
 dev = [
   "pytest>=8.0",
   "pytest-socket>=0.7",
@@ -56,6 +57,22 @@ Homepage = "https://github.com/thelonewander3r/PIIScanner"
 Documentation = "https://github.com/thelonewander3r/PIIScanner#readme"
 Repository = "https://github.com/thelonewander3r/PIIScanner"
 Issues = "https://github.com/thelonewander3r/PIIScanner/issues"
+Changelog = "https://github.com/thelonewander3r/PIIScanner/blob/main/CHANGELOG.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/piilint"]
+
+[tool.hatch.build.targets.sdist]
+# Lean sdist: omit caches/agent dirs and synthetic corpus (local/CI only).
+exclude = [
+  "/.claude",
+  "/.github",
+  "/.mypy_cache",
+  "/.pytest_cache",
+  "/.ruff_cache",
+  "/.venv",
+  "/tests/corpus",
+]
 
 [tool.ruff]
 line-length = 100

@@ -7,14 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+<!-- Post-0.1.0 notes go here. -->
 
-- Optional NER (`piilint[ner]`): Presidio/spaCy PERSON + ADDRESS, `piilint setup-ner`, `--ner` flag (off by default).
-- Launch collateral: CONTRIBUTING, SECURITY, examples pointer, README five-minute path and Demo section.
+## [0.1.0] — TBD (tag day)
 
-## [0.1.0] — Unreleased (prep)
-
-First public prep cut. **Not published to PyPI yet** (no `v*` tag until maintainer go + OIDC trusted publisher).
+First public release. **Not on PyPI until** maintainer go → `git tag v0.1.0` → OIDC trusted publisher via `.github/workflows/release.yml`.
 
 ### Added
 
@@ -24,8 +21,11 @@ First public prep cut. **Not published to PyPI yet** (no `v*` tag until maintain
 - Baseline + staged mode (Phase 4): `piilint baseline`, `--baseline` subtraction (fingerprint without line numbers), `--staged` via git index.
 - Reporters (Phase 5): `--format json` (schema_version 1 + `config_hash`), `--format sarif` (SARIF 2.1.0), `--show-matches` refused when `CI=true`.
 - Distribution (Phase 6): CI matrix workflow, OIDC PyPI release workflow (unused until tag), `.pre-commit-hooks.yaml`, composite GitHub Action (`action.yml`), install docs.
+- Optional NER (`piilint[ner]`): Presidio/spaCy PERSON + ADDRESS, `piilint setup-ner`, `--ner` flag (off by default).
+- Launch collateral: CONTRIBUTING, SECURITY, examples pointer, README five-minute path and Demo section.
 
 ### Notes
 
 - Optional NER is available as `piilint[ner]` (not pulled by the base install).
 - Package name is `piilint` (`piiscan` was taken on PyPI).
+- Replace `TBD (tag day)` with the real UTC date when cutting `v0.1.0`.
