@@ -276,9 +276,26 @@ Before the first real publish (tag `v0.1.0` only with explicit go):
 
 ---
 
+## Optional NER (names & addresses)
+
+PERSON/ADDRESS detection is **off by default** and lives behind an optional extra so the base install stays lean and scan-time stays offline.
+
+```bash
+pip install "piilint[ner]"    # or: uv sync --extra ner
+piilint setup-ner             # downloads en_core_web_sm (network; once)
+piilint . --ner               # enable PERSON + ADDRESS for this run
+```
+
+- Without `[ner]` installed, normal scans are unchanged; `piilint . --ner` exits **2** with an install hint.
+- With `[ner]` but no model, `--ner` exits **2** asking you to run `setup-ner`.
+- Config toggles `entities.person` / `entities.address` default to **false**; `--ner` enables both for the run.
+- Only English (`en_core_web_sm`) is supported in this phase. No scan-time network — model download is setup-only.
+
+---
+
 ## Status
 
-Phases 0–6 and **Phase 8 (launch collateral)** are complete. Deterministic recognizers, text + tabular + notebook adapters, console / JSON / SARIF reporters, synthetic benchmark corpus + CI gate, config/policy/noise controls, baseline subtraction, `--staged` mode, CI/release workflows, pre-commit hook, GitHub Action, and launch docs. **Phase 7 (optional NER)** remains post-launch. First production PyPI publish is intentionally deferred until maintainer go + OIDC publisher setup.
+Phases 0–8 are complete, including **Phase 7 optional NER** (`piilint[ner]`, `setup-ner`, `--ner` for PERSON/ADDRESS). Deterministic recognizers, text + tabular + notebook adapters, console / JSON / SARIF reporters, synthetic benchmark corpus + CI gate, config/policy/noise controls, baseline subtraction, `--staged` mode, CI/release workflows, pre-commit hook, GitHub Action, and launch docs. First production PyPI publish is intentionally deferred until maintainer go + OIDC publisher setup.
 
 ## Contributing & security
 

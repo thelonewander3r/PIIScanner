@@ -15,6 +15,7 @@ from piilint.config import ConfigError, load_config
 from piilint.engine import ScanResult, scan_path
 from piilint.findings import Severity
 from piilint.gitutil import GitError, find_repo_root, staged_files
+from piilint.recognizers import ner as ner_mod
 from piilint.reporters import render_console, render_json, render_sarif
 
 app = typer.Typer(
@@ -72,6 +73,7 @@ def _run_scan(
     fail_on: str | None,
     min_confidence: float | None,
     enable_ip: bool | None,
+    enable_ner: bool,
     sample_rows: int | None,
     exclude: list[str] | None,
     baseline: Path | None,
@@ -111,6 +113,20 @@ def _run_scan(
         typer.secho(f"Config error: {exc}", fg=typer.colors.RED, err=True)
         raise typer.Exit(2) from exc
 
+    if enable_ner:
+        try:
+            ner_mod.require_ner_ready()
+        except ner_mod.NerDependencyError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(2) from exc
+        except ner_mod.NerModelError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(2) from exc
+        from piilint.findings import EntityType as _EntityType
+
+        config.entity_enabled[_EntityType.PERSON] = True
+        config.entity_enabled[_EntityType.ADDRESS] = True
+
     try:
         threshold = _fail_on_rank(config.scan.fail_on)
     except typer.BadParameter as exc:
@@ -132,7 +148,13 @@ def _run_scan(
             raise typer.Exit(0)
 
     try:
-        result = scan_path(path, config=config, sample_rows=sample_rows, only_paths=only_paths)
+        result = scan_path(
+            path,
+            config=config,
+            sample_rows=sample_rows,
+            only_paths=only_paths,
+            enable_ner=enable_ner,
+        )
     except Exception as exc:  # noqa: BLE001 — unexpected errors are exit 2, not 1
         typer.secho(f"Scan failed: {exc}", fg=typer.colors.RED, err=True)
         raise typer.Exit(2) from exc
@@ -192,6 +214,13 @@ def scan_cmd(
         bool | None,
         typer.Option("--enable-ip/--no-enable-ip", help="Enable IP address detection."),
     ] = None,
+    ner: Annotated[
+        bool,
+        typer.Option(
+            "--ner",
+            help="Enable optional PERSON/ADDRESS NER (requires piilint[ner] + setup-ner).",
+        ),
+    ] = False,
     sample: Annotated[
         int | None,
         typer.Option("--sample", help="Sample at most N rows per tabular file."),
@@ -242,6 +271,7 @@ def scan_cmd(
         fail_on=fail_on,
         min_confidence=min_confidence,
         enable_ip=enable_ip,
+        enable_ner=ner,
         sample_rows=sample,
         exclude=exclude,
         baseline=baseline,
@@ -319,6 +349,37 @@ def baseline_cmd(
         f"→ {output}"
     )
     raise typer.Exit(0)
+
+
+@app.command("setup-ner", help="Download the English spaCy model for optional NER.")
+def setup_ner_cmd(
+    model: Annotated[
+        str,
+        typer.Option("--model", help="spaCy model name to download."),
+    ] = "en_core_web_sm",
+) -> None:
+    """Fetch the spaCy model for ``piilint[ner]`` (only scan-adjacent network path)."""
+    if not ner_mod.ner_deps_available():
+        typer.secho(
+            'NER requires the optional extra. Install with: pip install "piilint[ner]" '
+            "&& piilint setup-ner",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(2)
+    typer.echo(f"Downloading spaCy model {model!r} (network)…")
+    try:
+        ner_mod.download_spacy_model(model)
+    except Exception as exc:  # noqa: BLE001
+        typer.secho(
+            f"Failed to download spaCy model {model!r}: {exc}",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(2) from exc
+    typer.secho(f"NER model ready: {model}", fg=typer.colors.GREEN)
+    raise typer.Exit(0)
+
 
 
 def run() -> None:

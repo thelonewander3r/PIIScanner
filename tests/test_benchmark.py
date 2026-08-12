@@ -36,6 +36,9 @@ def _metrics() -> tuple[dict[str, float], dict[str, float], float, float]:
     manifest = _load_manifest()
     expected_counts: dict[EntityType, int] = defaultdict(int)
     for case in manifest["cases"]:
+        if case.get("requires_ner"):
+            # NER extras are optional; keep PERSON/ADDRESS out of core gates.
+            continue
         for exp in case.get("expected") or []:
             expected_counts[EntityType(exp["entity"])] += int(exp["count"])
 
@@ -44,6 +47,8 @@ def _metrics() -> tuple[dict[str, float], dict[str, float], float, float]:
     false_positives: dict[EntityType, int] = defaultdict(int)
 
     for case in manifest["cases"]:
+        if case.get("requires_ner"):
+            continue
         rel = case["path"]
         target = CORPUS_ROOT / rel
         result = scan_path(target)

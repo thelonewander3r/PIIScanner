@@ -53,12 +53,14 @@ def build_default_registry(
     *,
     default_phone_region: str = "US",
     enable_ip: bool = False,
+    enable_ner: bool = False,
 ) -> RecognizerRegistry:
     from piilint.recognizers.credit_card import CreditCardRecognizer
     from piilint.recognizers.dob import DobRecognizer
     from piilint.recognizers.email import EmailRecognizer
     from piilint.recognizers.iban import IbanRecognizer
     from piilint.recognizers.ip import IpAddressRecognizer
+    from piilint.recognizers.ner import AddressRecognizer, PersonRecognizer
     from piilint.recognizers.phone import PhoneRecognizer
     from piilint.recognizers.ssn import SsnUsRecognizer
 
@@ -70,4 +72,7 @@ def build_default_registry(
     registry.register(IbanRecognizer())
     registry.register(DobRecognizer())
     registry.register(IpAddressRecognizer(), enabled=enable_ip)
+    # Always register (lazy imports inside scan); enabled only when NER is requested.
+    registry.register(PersonRecognizer(), enabled=enable_ner)
+    registry.register(AddressRecognizer(), enabled=enable_ner)
     return registry

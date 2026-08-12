@@ -285,9 +285,9 @@ CI matrix workflow (`.github/workflows/ci.yml`: ubuntu/windows/macos × 3.10/3.1
 **AC verified (local):** workflows + hook + action YAML present and parse; `uv run pytest` / ruff / mypy green; `piilint --version`; hatchling build smoke. **Remote CI green** pending workflow YAML on `main` (PAT may lack `workflow` scope — Emanuel blocker). First PyPI publish deferred to explicit go.
 
 
-### Phase 7 — Optional NER extra (1–2 days, after launch is fine) — NOT STARTED
+### Phase 7 — Optional NER extra (1–2 days, after launch is fine) — DONE 2026-08-11
 
-Post-launch. Optional `piilint[ner]` → Presidio/spaCy for PERSON/ADDRESS; explicit `piilint setup-ner`; off by default. **Do not start until after launch collateral ships.**
+Optional `piilint[ner]` → `presidio-analyzer` + spaCy for PERSON/ADDRESS; explicit `piilint setup-ner` downloads `en_core_web_sm` (only scan-adjacent network path); off by default; enable with `--ner` (or config `entities.person` / `entities.address`). Presidio `LOCATION` mapped to piilint `ADDRESS`. Lazy imports keep base install lean. Core benchmark gates exclude `requires_ner` corpus cases.
 
 ### Phase 8 — Launch collateral — DONE 2026-08-11
 
