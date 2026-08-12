@@ -297,9 +297,15 @@ README five-minute path (install via uvx/pipx/pip → `piilint .` → pre-commit
 
 ---
 
-### Sprint 7 — First PyPI release prep (IN PROGRESS, 2026-08-11)
+### Sprint 7 — First PyPI release prep (DONE prep merged #15, 2026-08-11)
 
-Prep-only for `piilint` `0.1.0` ([issue #14](https://github.com/thelonewander3r/PIIScanner/issues/14), branch `feature/sprint7-pypi-prep`). Metadata polish (`pyproject.toml`), CHANGELOG fold into `[0.1.0]` (date TBD), README install + trusted-publisher checklist, maintainer runbook [`docs/RELEASE.md`](./docs/RELEASE.md), local `uv build` dry-run. **Not published** — no `v*` tag without Emanuel’s explicit go. Trusted publisher + GitHub environment `pypi` remain **Emanuel UI** steps. See [`PROJECT.md`](./PROJECT.md).
+Prep for `piilint` `0.1.0` merged via [#15](https://github.com/thelonewander3r/PIIScanner/pull/15) ([issue #14](https://github.com/thelonewander3r/PIIScanner/issues/14)). Metadata polish (`pyproject.toml`), CHANGELOG fold into `[0.1.0]` (date TBD), README install + trusted-publisher checklist, maintainer runbook [`docs/RELEASE.md`](./docs/RELEASE.md), local `uv build` dry-run. **Not published** — no `v*` tag without Emanuel’s explicit go. Trusted publisher + GitHub environment `pypi` remain **Emanuel UI** steps. See [`PROJECT.md`](./PROJECT.md).
+
+---
+
+### Sprint 8 — Release hardening (IN PROGRESS, 2026-08-11)
+
+Prove install-from-wheel before any production `v*` tag ([issue #16](https://github.com/thelonewander3r/PIIScanner/issues/16), branch `feature/sprint8-release-hardening`). Extends `.github/workflows/ci.yml` with required `package-smoke` (ubuntu + windows: `uv build` → clean venv → wheel install → `--version` → corpus scan exit 1 + masked output), separate optional `ner-smoke` (ubuntu: `--extra ner` + `setup-ner` + `--ner`), and `action-smoke` (local composite `uses: ./` with `fail-on: never` + YAML parse of `action.yml` / `.pre-commit-hooks.yaml`). Docs: `docs/RELEASE.md` “How we know releases are good” + TestPyPI trusted-publisher dry-run path (**no upload** without Emanuel go). Default matrix `test` unchanged. **Hard stop:** no production `v*` tag / no prod PyPI upload. See [`PROJECT.md`](./PROJECT.md).
 
 ---
 

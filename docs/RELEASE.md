@@ -3,16 +3,33 @@
 Maintainer steps for the **first** PyPI publish of `piilint`.  
 **Hard stop:** do **not** cut a `v*` tag or publish until **Emanuel** gives an explicit go.
 
-See also: [issue #14](https://github.com/thelonewander3r/PIIScanner/issues/14), [`PROJECT.md`](../PROJECT.md) Sprint 7, README trusted-publisher checklist.
+See also: [issue #14](https://github.com/thelonewander3r/PIIScanner/issues/14), [issue #16](https://github.com/thelonewander3r/PIIScanner/issues/16) (Sprint 8 hardening), [`PROJECT.md`](../PROJECT.md) Sprint 7–8, README trusted-publisher checklist.
+
+---
+
+## How we know releases are good
+
+Before any production `v*` tag, CI and local checks must prove that a **built artifact** (not only an editable checkout) works:
+
+| Gate | Where | What it proves |
+|---|---|---|
+| Default matrix `test` | `.github/workflows/ci.yml` | ruff / mypy / pytest+benchmark / `piilint --version` on ubuntu + windows + macos × Python 3.10 + 3.13 |
+| `package-smoke` (**required**) | same workflow | `uv build` → clean venv → `python -m pip install` **wheel only** (no editable, no `--extra dev`) on **ubuntu + windows** → `piilint --version` → scan `tests/corpus/text` with `--fail-on low` → **exit 1** + **no raw corpus PII** in stdout/stderr |
+| `action-smoke` | same workflow | `action.yml` + `.pre-commit-hooks.yaml` parse; composite action `uses: ./` on `tests/corpus/text` with `fail-on: never` |
+| `ner-smoke` (separate) | same workflow (ubuntu) | optional `uv sync --extra ner` → `piilint setup-ner` → `--ner` scan of synthetic prose; must **not** break default matrix |
+| Local | maintainer machine | `uv run pytest -q` still green on the release commit |
+
+**Hard stop:** no production `v*` tag and no prod PyPI upload without Emanuel’s explicit go. TestPyPI dry-run only with Emanuel go (see below).
 
 ---
 
 ## 0. Preconditions (prep PR)
 
 - [ ] Prep PR merged to `main` (metadata, CHANGELOG fold, README install wording, this runbook).
-- [ ] CI green on `main`.
+- [ ] CI green on `main` (including **package-smoke** on ubuntu + windows).
 - [ ] Local `uv build` previously succeeded; wheel entry point `piilint` present.
 - [ ] Version is `0.1.0` in `pyproject.toml` and `src/piilint/__init__.py`.
+- [ ] Sprint 8 release-hardening AC met ([issue #16](https://github.com/thelonewander3r/PIIScanner/issues/16)).
 
 ---
 
@@ -49,6 +66,54 @@ Confirm [`.github/workflows/release.yml`](../.github/workflows/release.yml):
 
 ---
 
+## 1b. TestPyPI trusted publisher (dry-run path)
+
+Optional rehearsal **before** the production tag. **Do not upload** unless Emanuel explicitly says go.
+
+### Why
+
+TestPyPI lets maintainers prove OIDC trusted publishing end-to-end without publishing `0.1.0` to production PyPI.
+
+### Emanuel-only — TestPyPI UI
+
+1. Sign in at [https://test.pypi.org](https://test.pypi.org) (often the same account as prod, but a separate index).
+2. Add a **pending publisher** (or project publisher) for GitHub:
+   - **Project name:** `piilint` (TestPyPI namespace is independent of prod)
+   - **Owner:** `thelonewander3r`
+   - **Repository:** `PIIScanner`
+   - **Workflow name:** choose a **dedicated** workflow filename if/when added (e.g. `release-testpypi.yml`) — do **not** point TestPyPI at production `release.yml` without a separate job/environment
+   - **Environment name:** e.g. `testpypi` (create matching GitHub Environment)
+3. Prefer a separate workflow/job that sets:
+
+   ```yaml
+   environment: testpypi
+   permissions:
+     id-token: write
+   steps:
+     - uses: pypa/gh-action-pypi-publish@release/v1
+       with:
+         repository-url: https://test.pypi.org/legacy/
+   ```
+
+4. Trigger only via `workflow_dispatch` or an explicit non-`v*` dry-run tag agreed with Emanuel — **never** as a side effect of the production `v*` tag job.
+
+### Dry-run upload policy
+
+- **Default:** document only; **no upload**.
+- **Upload:** only with Emanuel’s explicit go for that dry-run.
+- After a TestPyPI upload (if any), verify install from TestPyPI:
+
+  ```bash
+  pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ piilint==0.1.0
+  piilint --version
+  ```
+
+  (`--extra-index-url` may be needed for dependencies that exist only on prod PyPI.)
+
+- TestPyPI success does **not** authorize a production `v*` tag; prod still needs a separate Emanuel go.
+
+---
+
 ## 2. Wait for Emanuel go
 
 Product Owner / Lead Dev: **stop here** until Emanuel explicitly says to cut the tag.
@@ -59,6 +124,7 @@ Checklist before asking:
 - [ ] GitHub `pypi` environment exists.
 - [ ] CHANGELOG `[0.1.0]` date set (or set in the same commit as the tag).
 - [ ] No secrets or unexpected files in a fresh `uv build` inspect.
+- [ ] `package-smoke` green on ubuntu + windows for the release commit.
 
 ---
 
@@ -111,8 +177,33 @@ Update README if any “until published” git-fallback wording should be soften
 
 ---
 
+## 6. Action / pre-commit manual check (if CI skipped)
+
+CI `action-smoke` covers this on PRs. Manual fallback:
+
+```bash
+# YAML still parse
+python -c "import yaml; yaml.safe_load(open('action.yml')); yaml.safe_load(open('.pre-commit-hooks.yaml'))"
+
+# Composite action: use a throwaway workflow or act; or from a PR that runs action-smoke.
+# Pre-commit hook snippet (consumer repo):
+#   - repo: https://github.com/thelonewander3r/PIIScanner
+#     rev: v0.1.0   # after tag
+#     hooks:
+#       - id: piilint
+```
+
+Local staged-hook smoke (optional, from a clone with a staged text file):
+
+```bash
+pre-commit try-repo . piilint --verbose --all-files
+```
+
+---
+
 ## Out of scope / do not do
 
-- No TestPyPI upload unless Emanuel asks.
+- No TestPyPI upload unless Emanuel asks (see §1b).
 - No long-lived PyPI tokens in GitHub secrets.
 - No `v*` tag from prep branches without Emanuel go.
+- No prod PyPI upload from Sprint 8 hardening work.

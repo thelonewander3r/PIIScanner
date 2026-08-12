@@ -4,6 +4,7 @@ on:
   push:
     branches: [main, master, "feature/**"]
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -43,3 +44,138 @@ jobs:
 
       - name: Version smoke
         run: uv run piilint --version
+
+  # Required on PRs: prove strangers can install a built wheel (no editable / no --extra dev).
+  package-smoke:
+    name: Package build + install-from-wheel smoke
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.12"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Build sdist + wheel
+        run: uv build
+
+      - name: Clean venv install from wheel + scan smoke
+        shell: bash
+        env:
+          CI: "true"
+        run: |
+          set -euo pipefail
+          WHEEL=$(ls dist/piilint-*.whl | head -n1)
+          echo "Installing wheel: $WHEEL"
+          uv venv .smoke-venv
+          if [ -x .smoke-venv/bin/python ]; then
+            PY=.smoke-venv/bin/python
+            PIILINT=.smoke-venv/bin/piilint
+          else
+            PY=.smoke-venv/Scripts/python
+            PIILINT=.smoke-venv/Scripts/piilint
+          fi
+          "$PY" -m pip install --upgrade pip
+          "$PY" -m pip install "$WHEEL"
+          "$PIILINT" --version
+          set +e
+          OUT=$("$PIILINT" scan tests/corpus/text --fail-on low 2>&1)
+          RC=$?
+          set -e
+          printf '%s\n' "$OUT"
+          if [ "$RC" -ne 1 ]; then
+            echo "Expected exit code 1 (findings), got $RC" >&2
+            exit 1
+          fi
+          # Synthetic corpus values must never appear unmasked in console output.
+          LEAKS=(
+            "234-56-7890"
+            "512-48-3017"
+            "4532015112830366"
+            "4556737586899855"
+            "customer.alpha@retailmail.test"
+            "ops.beta@corpmail.test"
+            "GB82WEST12345698765432"
+            "DE89370400440532013000"
+            "+1 212-735-0182"
+            "+14159032741"
+          )
+          for needle in "${LEAKS[@]}"; do
+            if printf '%s\n' "$OUT" | grep -F "$needle" >/dev/null; then
+              echo "RAW PII leaked in output: $needle" >&2
+              exit 1
+            fi
+          done
+          echo "package-smoke OK (exit 1 + masked)"
+
+      - name: Upload dist artifacts
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-smoke-dist
+          path: dist/
+          if-no-files-found: error
+
+  # Optional NER path — separate job so default matrix / package-smoke stay lean.
+  # Runs on PRs (ubuntu); downloads en_core_web_sm via setup-ner (setup-time network only).
+  ner-smoke:
+    name: Optional NER smoke (ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Sync with NER extra
+        run: uv sync --extra ner
+
+      - name: Download spaCy model (setup-ner)
+        run: uv run piilint setup-ner
+
+      - name: NER scan smoke
+        env:
+          CI: "true"
+        run: uv run piilint scan tests/corpus/text/names_addresses.txt --ner --fail-on never
+
+  # Lightweight composite action + hook YAML parse smoke (fail-on never → exit 0).
+  action-smoke:
+    name: Action + pre-commit config smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate action.yml and .pre-commit-hooks.yaml parse
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          try:
+              import yaml
+          except ImportError:
+              import subprocess
+              subprocess.check_call(["python", "-m", "pip", "install", "pyyaml", "-q"])
+              import yaml
+          for path in ("action.yml", ".pre-commit-hooks.yaml"):
+              data = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+              assert data is not None, path
+              print(f"OK parse: {path}")
+          hooks = yaml.safe_load(Path(".pre-commit-hooks.yaml").read_text(encoding="utf-8"))
+          assert isinstance(hooks, list) and hooks[0]["id"] == "piilint"
+          print("OK pre-commit hook id=piilint")
+          PY
+
+      - name: Run local composite action (fail-on never)
+        uses: ./
+        with:
+          path: tests/corpus/text
+          fail-on: never
+          python-version: "3.12"
