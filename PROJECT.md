@@ -15,9 +15,35 @@ owner: Product Owner
 
 ## Status
 
-`piilint` **0.1.0** is on PyPI. Phases 0–8 + release hardening done. Post-release docs done (#18/#19). **Sprint 9 done** — `piilint redact` + example policy packs on `main` ([#20](https://github.com/thelonewander3r/PIIScanner/issues/20) / [#21](https://github.com/thelonewander3r/PIIScanner/pull/21)).
+`piilint` **0.1.0** is on PyPI. Sprint 9 (`redact` + policy packs) done on `main` ([#20](https://github.com/thelonewander3r/PIIScanner/issues/20) / [#21](https://github.com/thelonewander3r/PIIScanner/pull/21)).
 
-**Hold:** further prod `v*` tags (e.g. `v0.2.0`) still need Emanuel’s explicit go.
+**Next:** Sprint 10 in progress ([#22](https://github.com/thelonewander3r/PIIScanner/issues/22)) ? notebook + parquet redact.  
+**Hold:** no `v0.2.0` (or other prod `v*` tags) without Emanuel?s explicit go.
+
+---
+
+
+## Sprint 10 ? Notebook + Parquet redact (IN PROGRESS)
+
+**Goal:** Extend `piilint redact` so `.ipynb` (incl. output cells) and `.parquet` get cleaned copies like text/JSON/CSV.
+
+**Tracking:** [Issue #22](https://github.com/thelonewander3r/PIIScanner/issues/22) ? branch `feature/sprint10-notebook-parquet-redact`  
+**Version:** land on `main` only; **do not** cut `v0.2.0` unless Emanuel goes.
+
+### In scope
+
+1. Notebooks ? source + outputs; nbformat-compatible copy under `-o`
+2. Parquet ? string / dictionary-string columns; document nested limits
+3. Same policy/mask path; no in-place; no new base deps
+4. Tests + README ?supported today?
+
+### Acceptance
+
+- [ ] Cleaned `.ipynb` + `.parquet` copies; sources untouched
+- [ ] Notebook **outputs** covered
+- [ ] Tests / CI / ruff / mypy green
+- [ ] README updated
+- [ ] Lead Dev LGTM; PO merge
 
 ---
 

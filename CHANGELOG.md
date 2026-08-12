@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `piilint redact PATH -o OUT_DIR` ? write cleaned **copies** with PII spans rewritten via existing `mask_value` (text + json/jsonl + csv/tsv; no in-place; no new base deps).
 - Example org policy packs under `examples/policies/` (`strict-ci`, `data-eng`, `open-source-lib`) + disclaimer README.
+- `piilint redact` now also cleans **`.ipynb`** (source + outputs) and **`.parquet`** string columns (Sprint 10).
 
 
 ## [0.1.0] — 2026-08-12

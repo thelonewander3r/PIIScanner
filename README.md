@@ -313,7 +313,7 @@ Write **copies** with PII spans replaced by the same masks as findings (no in-pl
 piilint redact ./data -o ./data-clean
 ```
 
-Supported today: **text** + **json/jsonl** + **csv/tsv**. Notebooks/parquet are skipped (follow-up). Uses the base wheel only (no new deps / no `presidio-anonymizer`). Honors the same config/policy as `scan` (allowlists, `# piilint: ignore`, entity toggles, `min_confidence`, excludes). Sources under the input path are never modified.
+Supported today: **text** + **json/jsonl** + **csv/tsv** + **notebooks (`.ipynb`, including output cells)** + **parquet** (string / dictionary-string columns; nested/list/struct left as-is). Uses the base wheel only (no new deps / no `presidio-anonymizer`). Honors the same config/policy as `scan` (allowlists, `# piilint: ignore`, entity toggles, `min_confidence`, excludes). Sources under the input path are never modified.
 
 ## Example policy packs
 

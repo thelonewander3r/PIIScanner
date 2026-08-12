@@ -116,3 +116,49 @@ def test_policy_packs_parse() -> None:
         cfg = load_file_config(root / name)
         assert cfg.entity_enabled[EntityType.IP_ADDRESS] is False
         assert cfg.scan.min_confidence >= 0.65
+
+
+CORPUS_NOTEBOOK = Path(__file__).resolve().parent.parent / "corpus" / "notebook"
+CORPUS_PARQUET = Path(__file__).resolve().parent.parent / "corpus" / "parquet"
+
+
+def test_redact_notebook_covers_outputs(tmp_path: Path) -> None:
+    import nbformat
+
+    out = tmp_path / "clean"
+    result = redact_tree(CORPUS_NOTEBOOK, out, config=default_config())
+    assert result.files_written >= 1
+    assert result.spans_redacted >= 1
+    dest = out / "leak_demo.ipynb"
+    nb = nbformat.read(dest, as_version=4)
+    blob = dest.read_text(encoding="utf-8")
+    for raw in RAW_SECRETS:
+        assert raw not in blob
+    # Must still be a loadable notebook with outputs present
+    assert nb.cells
+    assert any(cell.get("outputs") for cell in nb.cells if cell.get("cell_type") == "code")
+    # sources untouched
+    original = (CORPUS_NOTEBOOK / "leak_demo.ipynb").read_text(encoding="utf-8")
+    assert any(raw in original for raw in RAW_SECRETS) or "4111" in original or "4532" in original
+    after = scan_path(out)
+    before = scan_path(CORPUS_NOTEBOOK)
+    assert len(after.findings) < len(before.findings)
+
+
+def test_redact_parquet_string_columns(tmp_path: Path) -> None:
+    import pyarrow.parquet as pq
+
+    out = tmp_path / "clean"
+    result = redact_tree(CORPUS_PARQUET, out, config=default_config())
+    assert result.files_written >= 1
+    dest = out / "users.parquet"
+    table = pq.read_table(dest)
+    assert table.num_rows >= 1
+    blob = "\n".join(
+        str(v) for col in table.column_names for v in table.column(col).to_pylist() if v is not None
+    )
+    for raw in RAW_SECRETS:
+        assert raw not in blob
+    after = scan_path(out)
+    before = scan_path(CORPUS_PARQUET)
+    assert len(after.findings) <= len(before.findings)
