@@ -14,7 +14,7 @@ Before any production `v*` tag, CI and local checks must prove that a **built ar
 | Gate | Where | What it proves |
 |---|---|---|
 | Default matrix `test` | `.github/workflows/ci.yml` | ruff / mypy / pytest+benchmark / `piilint --version` on ubuntu + windows + macos × Python 3.10 + 3.13 |
-| `package-smoke` (**required**) | same workflow | `uv build` → clean venv → `python -m pip install` **wheel only** (no editable, no `--extra dev`) on **ubuntu + windows** → `piilint --version` → scan `tests/corpus/text` with `--fail-on low` → **exit 1** + **no raw corpus PII** in stdout/stderr |
+| `package-smoke` (**required**) | same workflow | `uv build` → clean venv → `uv pip install --python .smoke-venv` **wheel only** (no editable, no `--extra dev`) on **ubuntu + windows** → `piilint --version` → scan `tests/corpus/text` with `--fail-on low` → **exit 1** + **no raw corpus PII** in stdout/stderr |
 | `action-smoke` | same workflow | `action.yml` + `.pre-commit-hooks.yaml` parse; composite action `uses: ./` on `tests/corpus/text` with `fail-on: never` |
 | `ner-smoke` (separate) | same workflow (ubuntu) | optional `uv sync --extra ner` → `piilint setup-ner` → `--ner` scan of synthetic prose; must **not** break default matrix |
 | Local | maintainer machine | `uv run pytest -q` still green on the release commit |
