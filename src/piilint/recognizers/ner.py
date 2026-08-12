@@ -119,7 +119,7 @@ def download_spacy_model(model: str = SPACY_MODEL) -> None:
 
         # Avoid interactive prompts; download() may still shell out to pip.
         os.environ.setdefault("SPACY_WARNING_IGNORE", "W008")
-        download = getattr(spacy_cli, "download")
+        download = getattr(spacy_cli, "download")  # noqa: B009
         download(model)
         return
     except Exception as exc:  # noqa: BLE001
