@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Optional NER (`piilint[ner]`): Presidio/spaCy PERSON + ADDRESS, `piilint setup-ner`, `--ner` flag (off by default).
 - Launch collateral: CONTRIBUTING, SECURITY, examples pointer, README five-minute path and Demo section.
 
 ## [0.1.0] — Unreleased (prep)
@@ -26,5 +27,5 @@ First public prep cut. **Not published to PyPI yet** (no `v*` tag until maintain
 
 ### Notes
 
-- Optional NER (`piilint[ner]`, Phase 7) is intentionally post-launch and not part of 0.1.0.
+- Optional NER is available as `piilint[ner]` (not pulled by the base install).
 - Package name is `piilint` (`piiscan` was taken on PyPI).

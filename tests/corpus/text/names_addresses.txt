@@ -1,0 +1,6 @@
+# Synthetic prose for NER tests — 100% fake names and addresses. Never real PII.
+
+Contact: Alice Exampleton met Bob Sampleton at the office.
+Alice Exampleton lives at 123 Fictitious Lane, Springfield, IL 62701.
+Please mail the package to Bob Sampleton, 456 Imaginary Avenue, Suite 7, Metropolis, NY 10001.
+Carol Demotron signed the form while visiting 789 Made-Up Street, Smallville, OH 43001.

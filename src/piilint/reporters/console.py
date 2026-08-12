@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import Counter
 
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
 from piilint.engine import ScanResult
@@ -63,7 +64,7 @@ def render_console(
                 f"[{sev_style}]{f.severity.value}[/{sev_style}]",
                 f.entity.value,
                 loc,
-                sample,
+                escape(sample),
                 f"{f.confidence:.2f}",
             )
         out.print(table)

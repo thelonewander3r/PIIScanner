@@ -220,19 +220,29 @@ def _iter_adapter_stream(
         return "units", adapter.iter_units(file_path, rel_path=rel)
 
 
-def _build_registry(config: Config) -> RecognizerRegistry:
+def _build_registry(config: Config, *, enable_ner: bool = False) -> RecognizerRegistry:
+    ner_entities = (EntityType.PERSON, EntityType.ADDRESS)
+    ner_wanted = enable_ner or any(config.is_entity_enabled(e) for e in ner_entities)
+    if ner_wanted:
+        # Fail fast with a clear message before scanning (no silent skip).
+        from piilint.recognizers.ner import require_ner_ready
+
+        require_ner_ready()
+
     registry = build_default_registry(
         default_phone_region=config.scan.phone_region,
         enable_ip=config.is_entity_enabled(EntityType.IP_ADDRESS),
+        enable_ner=False,
     )
-    # Apply entity enable/disable from config for all registered entities
+    # Apply entity enable/disable from config; --ner forces PERSON+ADDRESS on for the run.
     for entity in list(EntityType):
-        if entity in (EntityType.PERSON, EntityType.ADDRESS):
-            # NER not registered in base install
-            continue
         recognizer = registry.get(entity)
-        if recognizer is not None:
-            registry.enable(entity, config.is_entity_enabled(entity))
+        if recognizer is None:
+            continue
+        enabled = config.is_entity_enabled(entity)
+        if entity in ner_entities and enable_ner:
+            enabled = True
+        registry.enable(entity, enabled)
     return registry
 
 
@@ -242,6 +252,7 @@ def scan_path(
     config: Config | None = None,
     min_confidence: float | None = None,
     enable_ip: bool | None = None,
+    enable_ner: bool = False,
     phone_region: str | None = None,
     include: list[str] | None = None,
     exclude: list[str] | None = None,
@@ -262,6 +273,9 @@ def scan_path(
         cfg.scan.min_confidence = min_confidence
     if enable_ip is not None:
         cfg.entity_enabled[EntityType.IP_ADDRESS] = enable_ip
+    if enable_ner:
+        cfg.entity_enabled[EntityType.PERSON] = True
+        cfg.entity_enabled[EntityType.ADDRESS] = True
     if phone_region is not None:
         cfg.scan.phone_region = phone_region
     if exclude is not None:
@@ -273,7 +287,7 @@ def scan_path(
     effective_min = cfg.scan.min_confidence
 
     root = target.resolve()
-    registry = _build_registry(cfg)
+    registry = _build_registry(cfg, enable_ner=enable_ner)
     recognizers = registry.enabled_recognizers()
     adapters = default_adapters()
     findings: list[Finding] = []

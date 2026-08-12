@@ -36,7 +36,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-ner = []  # Phase 7: presidio-analyzer + spaCy
+ner = [
+    "presidio-analyzer>=2.2.355,<3",
+    "spacy!=3.7.0,>=3.7.2,<3.8.14",
+]  # Phase 7: presidio-analyzer + spaCy
 dev = [
   "pytest>=8.0",
   "pytest-socket>=0.7",
@@ -71,13 +74,27 @@ mypy_path = "src"
 explicit_package_bases = true
 
 [[tool.mypy.overrides]]
-module = ["phonenumbers.*", "pathspec.*", "nbformat.*", "nbformat.reader.*", "pyarrow.*", "tomli"]
+module = [
+  "phonenumbers.*",
+  "pathspec.*",
+  "nbformat.*",
+  "nbformat.reader.*",
+  "pyarrow.*",
+  "tomli",
+  "presidio_analyzer",
+  "presidio_analyzer.*",
+  "spacy",
+  "spacy.*",
+]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--disable-socket --allow-unix-socket"
 pythonpath = ["src"]
+markers = [
+  "ner: optional NER tests (may require piilint[ner] + spaCy model)",
+]
 
 [tool.piilint]
 # Example config surface; runtime prefers piilint.toml (Phase 3).

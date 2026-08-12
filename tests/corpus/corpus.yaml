@@ -75,3 +75,14 @@ cases:
       - entity: CREDIT_CARD
         count: 2
         location_hints: ["output"]
+
+  # Optional NER (PERSON/ADDRESS). Skipped by core benchmark gate unless --ner + model.
+  - path: text/names_addresses.txt
+    adapter: text
+    requires_ner: true
+    expected:
+      # spaCy LOCATION often yields city/GPE spans (mapped to ADDRESS), not full street lines.
+      - entity: PERSON
+        count: 5
+      - entity: ADDRESS
+        count: 3

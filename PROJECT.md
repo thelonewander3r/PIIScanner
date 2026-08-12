@@ -26,12 +26,12 @@ Phases **0–6 + 8** are done on `main`. Next ordered by Emanuel (2026-08-11):
 | Phase | Theme | Status |
 |---|---|---|
 | 0–6, 8 | MVP + launch collateral | Done |
-| 7 | Optional NER | **In progress (Sprint 6)** — [issue #12](https://github.com/thelonewander3r/PIIScanner/issues/12) |
+| 7 | Optional NER | **Done (Sprint 6)** — [issue #12](https://github.com/thelonewander3r/PIIScanner/issues/12) |
 | — | First PyPI publish | Queued after Sprint 6 |
 
 ---
 
-## Sprint 6 — Optional NER (IN PROGRESS)
+## Sprint 6 — Optional NER (DONE)
 
 **Goal:** Add PERSON/ADDRESS detection as a heavy optional extra without bloating the base install or breaking the no-scan-time-network promise.
 
@@ -58,12 +58,12 @@ Phases **0–6 + 8** are done on `main`. Next ordered by Emanuel (2026-08-11):
 
 ### Acceptance
 
-- [ ] `pip`/`uv` install without `[ner]` does not pull Presidio/spaCy
-- [ ] `piilint[ner]` + `setup-ner` enables `--ner` scans for PERSON/ADDRESS
-- [ ] Without setup/model, `--ner` fails clearly (exit 2), not silently
-- [ ] Default scans (no `--ner`) unchanged vs current MVP
-- [ ] pytest + core benchmark gates still hold with real numbers; ruff/mypy clean
-- [ ] No scan-time network except inside `setup-ner`
+- [x] `pip`/`uv` install without `[ner]` does not pull Presidio/spaCy
+- [x] `piilint[ner]` + `setup-ner` enables `--ner` scans for PERSON/ADDRESS
+- [x] Without setup/model, `--ner` fails clearly (exit 2), not silently
+- [x] Default scans (no `--ner`) unchanged vs current MVP
+- [x] pytest + core benchmark gates still hold with real numbers; ruff/mypy clean
+- [x] No scan-time network except inside `setup-ner`
 - [ ] Lead Dev review; PO merge
 
 ### Roles
