@@ -76,7 +76,7 @@ You (the agent) are building a production-quality open-source Python CLI. Rules:
 ## Non-goals and scope boundaries (v0)
 
 - **Not a secrets scanner.** No API keys, tokens, or passwords — gitleaks/trufflehog own that. Docs recommend pairing with gitleaks. This keeps positioning sharp.
-- **Detect-only.** No anonymization/redaction rewriting in v0 (a `--redact` mode writing cleaned copies is a strong post-MVP feature via presidio-anonymizer).
+- **Detect-first.** v0 was detect-only; **`piilint redact`** (Sprint 9) writes cleaned **copies** via base-wheel span rewrite (`mask_value`) ? no `presidio-anonymizer` / no new base deps. Notebooks/parquet redact still follow-up.
 - **No databases, PDFs, docx/xlsx, images/OCR** in v0. File formats listed below only.
 - **No telemetry** in v0. If ever added, opt-in only.
 - **English-first** detection; NER for other languages is post-MVP.
@@ -311,7 +311,7 @@ Prove install-from-wheel before any production `v*` tag ([issue #16](https://git
 
 ## Post-MVP roadmap (do NOT build now)
 
-- `--redact` mode writing anonymized copies (presidio-anonymizer) — likely the most-requested feature.
+- ~~`--redact` writing anonymized copies~~ ? **done (Sprint 9)** as `piilint redact PATH -o OUT` (base-wheel span rewrite; notebooks/parquet follow-up). No `presidio-anonymizer`.
 - Team layer (the paid product): shared policy packs, org-wide baselines, findings-**metadata** history dashboard (raw data never leaves the machine — only findings metadata).
 - More formats: xlsx, PDF; more locales (non-US SSN equivalents, phone regions).
 - **Chassis reuse:** the adapter/findings/baseline/reporter chassis is deliberately generic. Candidate sibling product: dataset diffing (DataDiff CI). Revisit after this ships; do not speculatively generalize now.

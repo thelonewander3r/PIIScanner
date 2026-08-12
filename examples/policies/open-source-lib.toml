@@ -1,0 +1,25 @@
+# Open-source / library repos: noisier code, more fixtures, fewer false CI fails.
+# Example only ? not a compliance certification.
+
+[scan]
+fail_on = "high"
+min_confidence = 0.8
+exclude = [
+  "**/tests/fixtures/**",
+  "**/testdata/**",
+  "**/node_modules/**",
+  "**/.venv/**",
+  "**/vendor/**",
+]
+
+[entities]
+ip_address = false
+
+[allowlist]
+# Common doc / placeholder domains ? extend for your org
+domains = [
+  "example.com",
+  "example.org",
+  "example.net",
+  "localhost",
+]

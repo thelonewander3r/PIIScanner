@@ -1,0 +1,22 @@
+# Data-engineering friendly defaults for large tabular trees.
+# Pair with: piilint baseline -o piilint-baseline.json
+# then: piilint scan . --baseline piilint-baseline.json
+# Example only ? not a compliance certification.
+
+[scan]
+fail_on = "high"
+min_confidence = 0.65
+exclude = [
+  "**/_build/**",
+  "**/spark-warehouse/**",
+  "**/.ipynb_checkpoints/**",
+  "**/node_modules/**",
+  "**/dist/**",
+  "**/.venv/**",
+]
+
+[entities]
+ip_address = false
+
+[allowlist]
+domains = ["example.com", "example.org"]

@@ -21,3 +21,7 @@ You should see credit-card findings from the notebook **output** (masked samples
 ## More formats
 
 The corpus also covers text, CSV, JSON/JSONL, and Parquet under `tests/corpus/`. Prefer those fixtures over inventing sample data with real personal information.
+
+## Policy packs
+
+Example org `piilint.toml` starters live under [`policies/`](./policies/) (strict CI, data-eng, open-source). Detection-aid templates only ? see the policies README disclaimer.
