@@ -115,7 +115,7 @@ def download_spacy_model(model: str = SPACY_MODEL) -> None:
 
     # Last resort: spaCy's own downloader (needs pip in the env).
     try:
-        from spacy.cli import download as spacy_download  # type: ignore[attr-defined]
+        from spacy.cli import download as spacy_download  # type: ignore[attr-defined, unused-ignore]
 
         # Avoid interactive prompts; download() may still shell out to pip.
         os.environ.setdefault("SPACY_WARNING_IGNORE", "W008")
