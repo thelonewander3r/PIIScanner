@@ -271,7 +271,10 @@ Config file + precedence (`config.py` overlay merge so unspecified keys do not r
 
 **AC verified:** baseline write stable versioned schema (fingerprints only); `--baseline` surfaces new findings only; fingerprint line-number independence unit-tested; `--staged` limits to staged paths; `uv run pytest` + benchmark gates; ruff + mypy strict on `src/`; README tradeoff documented.
 
-### Phase 5 — Reporters & DX polish (1–2 days) — NOT STARTED
+### Phase 5 — Reporters & DX polish (1–2 days) — DONE 2026-08-11
+`--format json` (schema_version 1: tool version, config_hash, masked findings, summary; deterministic `sort_keys` + finding sort by path/line/entity/fingerprint); `--format sarif` (SARIF 2.1.0, severity→level mapping, physical locations, partialFingerprints); console moved to `reporters/console.py` with Output-spec totals; `--show-matches` console-only, refused when `CI=true`. Modules: `reporters/json_.py`, `reporters/sarif.py`; re-exports from `__init__.py`. No recognizer imports in reporters. `config_hash` = SHA-256 of canonical effective Config (fail_on, min_confidence, exclude, entity_enabled, severity_overrides, allowlists, phone_region).
+
+**AC verified:** JSON schema_version 1 + masking + determinism unit-tested; SARIF 2.1.0 structure + severity mapping; console totals line shape; CLI `--format` composes with baseline/staged/fail-on; exit codes unchanged; ruff + mypy strict on `src/`; pytest + benchmark gates with real numbers.
 
 ### Phase 6 — Distribution (1–2 days) — NOT STARTED
 

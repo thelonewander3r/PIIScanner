@@ -78,7 +78,7 @@ Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
 | 2 | Tabular + notebook adapters | Done |
 | 3 | Policy & noise | Done — [issue #1](https://github.com/thelonewander3r/PIIScanner/issues/1) / [PR #2](https://github.com/thelonewander3r/PIIScanner/pull/2) |
 | 4 | Baseline + staged mode | Done — [issue #3](https://github.com/thelonewander3r/PIIScanner/issues/3) / [PR #4](https://github.com/thelonewander3r/PIIScanner/pull/4) |
-| 5 | Reporters & DX polish | **In progress (Sprint 3)** — [issue #5](https://github.com/thelonewander3r/PIIScanner/issues/5) |
+| 5 | Reporters & DX polish | **Done (Sprint 3)** — [issue #5](https://github.com/thelonewander3r/PIIScanner/issues/5) |
 | 6 | Distribution | Not started |
 | 7 | Optional NER | After launch OK |
 | 8 | Launch collateral | Not started |
@@ -93,7 +93,7 @@ Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
 
 ---
 
-## Sprint 3 — Reporters & DX polish (IN PROGRESS)
+## Sprint 3 — Reporters & DX polish (COMPLETE — pending Lead Dev review / PR)
 
 **Goal:** Machine-readable outputs for CI/Security tab, plus console polish — without breaking deterministic, masked-by-default reporting.
 
@@ -119,12 +119,12 @@ Full entity/adapter/reporter specs: see `BUILD_PLAN.md`.
 
 ### Acceptance (Sprint 3 done when)
 
-- [ ] `--format json` emits schema_version 1, masked-only findings, deterministic output
-- [ ] `--format sarif` is valid SARIF 2.1.0 and maps severities/locations usefully
-- [ ] Console matches the Output spec summary shape
-- [ ] Exit codes unchanged (0/1/2); reporters never turn exceptions into exit 1
-- [ ] `uv run pytest` green; ruff + mypy strict on `src/`; benchmark gates hold with real numbers
-- [ ] No recognizer imports in `reporters/`
+- [x] `--format json` emits schema_version 1, masked-only findings, deterministic output
+- [x] `--format sarif` is valid SARIF 2.1.0 and maps severities/locations usefully
+- [x] Console matches the Output spec summary shape
+- [x] Exit codes unchanged (0/1/2); reporters never turn exceptions into exit 1
+- [x] `uv run pytest` green; ruff + mypy strict on `src/`; benchmark gates hold with real numbers
+- [x] No recognizer imports in `reporters/`
 - [ ] Lead Developer review approved
 - [ ] PO cleanup; PR to `main`
 

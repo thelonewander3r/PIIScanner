@@ -64,9 +64,32 @@ you intentionally accept a new set of findings.
 
 Exit codes: `0` clean / nothing staged · `1` findings ≥ `--fail-on` · `2` usage/config/git error.
 
+## Output formats (Phase 5)
+
+Default output is a Rich **console** report (grouped by file → severity-colored table → totals).
+
+```bash
+# Machine-readable JSON (schema_version 1) — masked samples + value hashes only
+uv run piilint . --format json
+
+# SARIF 2.1.0 for GitHub code scanning (upload via github/codeql-action/upload-sarif)
+uv run piilint . --format sarif > piilint.sarif
+
+# Compose with baseline / staged / fail-on
+uv run piilint . --format json --baseline piilint-baseline.json --fail-on high
+```
+
+JSON includes a `config_hash`: SHA-256 of a canonical JSON snapshot of the **effective**
+scan config fields that affect detection/policy (`fail_on`, `min_confidence`, `exclude`,
+`entity_enabled`, `severity_overrides`, allowlists, `phone_region`). Paths and timestamps
+are excluded so the hash is stable across identical policy runs.
+
+`--show-matches` unmasks the console Sample column for local triage only. It is **refused**
+when `CI=true` (exit 2) and does not apply to JSON/SARIF (those formats never emit raw PII).
+
 ## Status
 
-Phases 0–4 complete: deterministic recognizers, text + tabular + notebook adapters, console reporter, synthetic benchmark corpus + CI gate, config/policy/noise controls, baseline subtraction, and `--staged` mode.
+Phases 0–5 complete: deterministic recognizers, text + tabular + notebook adapters, console / JSON / SARIF reporters, synthetic benchmark corpus + CI gate, config/policy/noise controls, baseline subtraction, and `--staged` mode.
 
 ## Pairing
 
