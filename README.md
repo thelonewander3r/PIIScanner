@@ -211,12 +211,17 @@ include raw paths, line/row/column/cell, `masked_sample`, match values, or file 
 - else: `$XDG_DATA_HOME/piilint/history.sqlite3` (fallback `~/.local/share/piilint/history.sqlite3`)
 - Override: `PIILINT_HISTORY_PATH` (full file) or `PIILINT_DATA_DIR` (directory)
 
+History queries are scoped to a deterministic local workspace id (`repo_id`) derived
+from the git root (or scan directory when not in a git repo). Pass an optional
+workspace path to `history` / `sync` to match the tree used by `report` (default `.`).
+Naive ISO datetimes in `--since` (no `Z` or offset) are interpreted as UTC.
+
 ```bash
 # Scan target, emit metadata-only JSON, and auto-record into local history (no network)
 piilint report --metadata-only
 piilint report PATH --metadata-only -o meta.json
 
-# New finding_fingerprints first seen since T (relative or ISO)
+# New finding_fingerprints first seen since T (relative or ISO; naive ISO = UTC)
 piilint history --since 7d
 piilint history --since 2026-08-01T00:00:00Z --json
 
@@ -225,8 +230,9 @@ piilint sync --metadata --dry-run
 ```
 
 `report --metadata-only` **does** append a run to the local history DB (documented intentional
-side effect). Real cloud upload is out of scope; `sync --metadata` without `--dry-run` exits
-with guidance and opens no sockets.
+side effect). Status lines from `report`, `history`, and `sync --metadata --dry-run` print
+counts and fingerprints only — never raw paths or match values. Real cloud upload is out of
+scope; `sync --metadata` without `--dry-run` exits with guidance and opens no sockets.
 
 See [`docs/TEAM_LAYER.md`](./docs/TEAM_LAYER.md) for the broader team-layer design.
 

@@ -17,7 +17,6 @@ from piilint.findings import Severity
 from piilint.gitutil import GitError, find_repo_root, staged_files
 from piilint.history import (
     HistoryError,
-    default_history_path,
     latest_metadata_records,
     new_findings_since,
     parse_since,
@@ -25,7 +24,11 @@ from piilint.history import (
     records_from_document,
     summarize_payload,
 )
-from piilint.metadata import build_metadata_document, render_metadata_json
+from piilint.metadata import (
+    build_metadata_document,
+    serialize_metadata_document,
+    workspace_repo_id,
+)
 from piilint.recognizers import ner as ner_mod
 from piilint.redact import RedactError, redact_tree
 from piilint.reporters import render_console, render_json, render_sarif
@@ -45,6 +48,29 @@ app = typer.Typer(
 SEVERITY_RANK = {Severity.LOW: 1, Severity.MEDIUM: 2, Severity.HIGH: 3}
 
 OutputFormat = Literal["console", "json", "sarif"]
+
+
+def _safe_os_error_message(exc: OSError, *, context: str) -> str:
+    """Return a concise OSError message without raw absolute paths."""
+    detail = getattr(exc, "filename", None)
+    if detail:
+        base = Path(str(detail)).name
+        return f"{context}: {type(exc).__name__} ({base})"
+    return f"{context}: {type(exc).__name__}"
+
+
+def _exit_history_error(exc: HistoryError) -> None:
+    typer.secho(f"History error: {exc}", fg=typer.colors.RED, err=True)
+    raise typer.Exit(2) from exc
+
+
+def _exit_history_os_error(exc: OSError, *, context: str) -> None:
+    typer.secho(
+        _safe_os_error_message(exc, context=context),
+        fg=typer.colors.RED,
+        err=True,
+    )
+    raise typer.Exit(2) from exc
 
 
 def _fail_on_rank(name: str) -> int:
@@ -541,7 +567,7 @@ def report_cmd(
         )
         raise typer.Exit(2)
 
-    config, result, _threshold = _prepare_scan(
+    config, result, threshold = _prepare_scan(
         path,
         fail_on=fail_on,
         min_confidence=min_confidence,
@@ -550,8 +576,23 @@ def report_cmd(
         exclude=exclude,
         baseline=baseline,
     )
-    doc = build_metadata_document(result.findings, config)
-    text_out = render_metadata_json(result.findings, config)
+    repo_id = workspace_repo_id(path)
+    doc = build_metadata_document(result.findings, config, repo_id=repo_id)
+    text_out = serialize_metadata_document(doc)
+
+    if output is not None:
+        try:
+            output.write_text(text_out, encoding="utf-8")
+        except OSError as exc:
+            typer.secho(
+                _safe_os_error_message(exc, context="Failed to write report"),
+                fg=typer.colors.RED,
+                err=True,
+            )
+            raise typer.Exit(2) from exc
+    else:
+        typer.echo(text_out, nl=False)
+
     try:
         records = records_from_document(doc)
         run_id = record_metadata_run(
@@ -559,32 +600,27 @@ def report_cmd(
             scanned_at=str(doc["scanned_at"]),
             config_hash=str(doc["config_hash"]),
             tool_version=__version__,
+            repo_id=repo_id,
         )
     except HistoryError as exc:
-        typer.secho(f"History error: {exc}", fg=typer.colors.RED, err=True)
-        raise typer.Exit(2) from exc
+        _exit_history_error(exc)
     except OSError as exc:
-        typer.secho(f"History write failed: {exc}", fg=typer.colors.RED, err=True)
-        raise typer.Exit(2) from exc
+        _exit_history_os_error(exc, context="History write failed")
 
     if output is not None:
-        try:
-            output.write_text(text_out, encoding="utf-8")
-        except OSError as exc:
-            typer.secho(f"Failed to write report: {exc}", fg=typer.colors.RED, err=True)
-            raise typer.Exit(2) from exc
         typer.echo(
-            f"Wrote metadata-only report ({len(records)} finding(s)) → {output} "
-            f"(recorded run {run_id} in {default_history_path()})"
+            f"Wrote metadata-only report ({len(records)} finding(s)); "
+            f"recorded local history run {run_id}"
         )
     else:
-        typer.echo(text_out, nl=False)
         typer.secho(
-            f"# recorded run {run_id} → {default_history_path()}",
+            f"# recorded local history run {run_id}",
             fg=typer.colors.GREEN,
             err=True,
         )
-    raise typer.Exit(0)
+
+    actionable = [f for f in result.findings if SEVERITY_RANK[f.severity] >= threshold]
+    raise typer.Exit(1 if actionable else 0)
 
 
 @app.command(
@@ -599,6 +635,14 @@ def history_cmd(
             help="Relative window (7d, 24h, 30m) or ISO-8601 datetime.",
         ),
     ],
+    path: Annotated[
+        Path,
+        typer.Argument(
+            exists=False,
+            readable=False,
+            help="Workspace root used to scope local history (default: current directory).",
+        ),
+    ] = Path("."),
     as_json: Annotated[
         bool,
         typer.Option("--json", help="Emit JSON instead of human-readable lines."),
@@ -607,13 +651,11 @@ def history_cmd(
     """Print new ``finding_fingerprint``s whose earliest local history sighting is after T."""
     try:
         since_dt = parse_since(since)
-        items = new_findings_since(since_dt)
+        items = new_findings_since(since_dt, repo_id=workspace_repo_id(path))
     except HistoryError as exc:
-        typer.secho(f"History error: {exc}", fg=typer.colors.RED, err=True)
-        raise typer.Exit(2) from exc
+        _exit_history_error(exc)
     except OSError as exc:
-        typer.secho(f"History read failed: {exc}", fg=typer.colors.RED, err=True)
-        raise typer.Exit(2) from exc
+        _exit_history_os_error(exc, context="History read failed")
 
     if as_json:
         import json
@@ -660,6 +702,14 @@ def sync_cmd(
             help="Print counts / byte size / destination placeholder; send nothing.",
         ),
     ] = False,
+    path: Annotated[
+        Path,
+        typer.Argument(
+            exists=False,
+            readable=False,
+            help="Workspace root used to scope local history (default: current directory).",
+        ),
+    ] = Path("."),
 ) -> None:
     """Dry-run metadata sync summary. Real upload is out of scope for Slice B local MVP."""
     if not metadata:
@@ -675,14 +725,15 @@ def sync_cmd(
 
     # Intentionally no urllib/httpx/socket usage — local DB read only.
     try:
-        records = latest_metadata_records(limit_runs=1)
+        records = latest_metadata_records(
+            limit_runs=1,
+            repo_id=workspace_repo_id(path),
+        )
         summary = summarize_payload(records)
     except HistoryError as exc:
-        typer.secho(f"History error: {exc}", fg=typer.colors.RED, err=True)
-        raise typer.Exit(2) from exc
+        _exit_history_error(exc)
     except OSError as exc:
-        typer.secho(f"History read failed: {exc}", fg=typer.colors.RED, err=True)
-        raise typer.Exit(2) from exc
+        _exit_history_os_error(exc, context="History read failed")
 
     typer.echo("sync --metadata --dry-run (no network; nothing sent)")
     typer.echo(f"destination: {summary['destination']}")

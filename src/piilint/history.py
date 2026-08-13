@@ -6,13 +6,18 @@ import json
 import os
 import re
 import sqlite3
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, NoReturn
 
-from piilint.metadata import METADATA_SCHEMA_VERSION, assert_no_forbidden_metadata
+from piilint.metadata import (
+    METADATA_SCHEMA_VERSION,
+    assert_no_forbidden_metadata,
+    coerce_metadata_record,
+    validate_metadata_record,
+)
 
 DB_SCHEMA_VERSION = 1
 
@@ -22,6 +27,24 @@ _ENV_DATA_DIR = "PIILINT_DATA_DIR"
 
 class HistoryError(Exception):
     """Raised for history DB / since-parse problems."""
+
+
+def _check_metadata_record(record: Mapping[str, Any]) -> None:
+    """Validate one metadata finding; raise HistoryError on schema violations."""
+    try:
+        validate_metadata_record(record)
+    except ValueError as exc:
+        raise HistoryError(str(exc)) from exc
+
+
+def _raise_db_error(exc: BaseException) -> NoReturn:
+    if isinstance(exc, HistoryError):
+        raise exc
+    if isinstance(exc, sqlite3.Error):
+        raise HistoryError("history database is unavailable or corrupt") from exc
+    if isinstance(exc, ValueError):
+        raise HistoryError("history database schema is invalid") from exc
+    raise exc
 
 
 @dataclass(frozen=True, slots=True)
@@ -86,11 +109,53 @@ def default_history_path() -> Path:
 
 
 def _connect(db_path: Path) -> sqlite3.Connection:
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(db_path))
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+    try:
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        conn = sqlite3.connect(str(db_path))
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys = ON")
+        return conn
+    except (sqlite3.DatabaseError, sqlite3.OperationalError) as exc:
+        raise HistoryError("history database is unavailable or corrupt") from exc
+
+
+def _create_history_tables(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS runs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            scanned_at TEXT NOT NULL,
+            config_hash TEXT NOT NULL,
+            tool_version TEXT,
+            schema_version INTEGER NOT NULL,
+            repo_id TEXT
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS findings_meta (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id INTEGER NOT NULL REFERENCES runs(id) ON DELETE CASCADE,
+            entity TEXT NOT NULL,
+            severity TEXT NOT NULL,
+            finding_fingerprint TEXT NOT NULL,
+            path_fingerprint TEXT NOT NULL,
+            value_fingerprint TEXT NOT NULL,
+            config_hash TEXT NOT NULL,
+            scanned_at TEXT NOT NULL,
+            repo_id TEXT,
+            tool_version TEXT,
+            schema_version INTEGER NOT NULL
+        )
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_findings_meta_fp ON findings_meta(finding_fingerprint)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_findings_meta_scanned_at ON findings_meta(scanned_at)"
+    )
 
 
 def _migrate(conn: sqlite3.Connection) -> None:
@@ -102,52 +167,25 @@ def _migrate(conn: sqlite3.Connection) -> None:
         )
         """
     )
-    row = conn.execute("SELECT value FROM meta WHERE key = 'schema_version'").fetchone()
-    if row is None:
+    _create_history_tables(conn)
+    conn.execute("BEGIN IMMEDIATE")
+    try:
         conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS runs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                scanned_at TEXT NOT NULL,
-                config_hash TEXT NOT NULL,
-                tool_version TEXT,
-                schema_version INTEGER NOT NULL,
-                repo_id TEXT
-            )
-            """
-        )
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS findings_meta (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                run_id INTEGER NOT NULL REFERENCES runs(id) ON DELETE CASCADE,
-                entity TEXT NOT NULL,
-                severity TEXT NOT NULL,
-                finding_fingerprint TEXT NOT NULL,
-                path_fingerprint TEXT NOT NULL,
-                value_fingerprint TEXT NOT NULL,
-                config_hash TEXT NOT NULL,
-                scanned_at TEXT NOT NULL,
-                repo_id TEXT,
-                tool_version TEXT,
-                schema_version INTEGER NOT NULL
-            )
-            """
-        )
-        conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_findings_meta_fp ON findings_meta(finding_fingerprint)"
-        )
-        conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_findings_meta_scanned_at ON findings_meta(scanned_at)"
-        )
-        conn.execute(
-            "INSERT INTO meta(key, value) VALUES ('schema_version', ?)",
+            "INSERT OR IGNORE INTO meta(key, value) VALUES ('schema_version', ?)",
             (str(DB_SCHEMA_VERSION),),
         )
         conn.commit()
-        return
+    except Exception:
+        conn.rollback()
+        raise
 
-    version = int(row["value"])
+    row = conn.execute("SELECT value FROM meta WHERE key = 'schema_version'").fetchone()
+    if row is None:
+        raise HistoryError("history database schema is invalid")
+    try:
+        version = int(row["value"])
+    except (TypeError, ValueError) as exc:
+        raise HistoryError("history database schema is invalid") from exc
     if version != DB_SCHEMA_VERSION:
         raise HistoryError(
             f"Unsupported history DB schema_version {version} (expected {DB_SCHEMA_VERSION})"
@@ -160,9 +198,9 @@ def open_history(db_path: Path | None = None) -> sqlite3.Connection:
     conn = _connect(path)
     try:
         _migrate(conn)
-    except Exception:
+    except Exception as exc:
         conn.close()
-        raise
+        _raise_db_error(exc)
     return conn
 
 
@@ -181,18 +219,18 @@ def record_metadata_run(
     Each record must already be metadata-only (forbidden keys rejected).
     """
     for record in records:
-        assert_no_forbidden_metadata(record)
-
-    if not records and (scanned_at is None or config_hash is None):
-        # Allow empty runs when caller supplies run-level fields.
-        pass
+        _check_metadata_record(record)
 
     run_scanned_at = scanned_at
     run_config_hash = config_hash
     run_tool_version = tool_version
     run_repo_id = repo_id
-    if records:
-        first = records[0]
+    coerced: list[dict[str, Any]] = []
+    for record in records:
+        item = coerce_metadata_record(record)
+        coerced.append(item)
+    if coerced:
+        first = coerced[0]
         run_scanned_at = run_scanned_at or str(first["scanned_at"])
         run_config_hash = run_config_hash or str(first["config_hash"])
         if run_tool_version is None:
@@ -206,6 +244,7 @@ def record_metadata_run(
 
     conn = open_history(db_path)
     try:
+        conn.execute("BEGIN IMMEDIATE")
         cur = conn.execute(
             """
             INSERT INTO runs(
@@ -223,7 +262,7 @@ def record_metadata_run(
         if cur.lastrowid is None:
             raise HistoryError("failed to obtain run id after insert")
         run_id = int(cur.lastrowid)
-        for record in records:
+        for record in coerced:
             conn.execute(
                 """
                 INSERT INTO findings_meta(
@@ -248,6 +287,9 @@ def record_metadata_run(
             )
         conn.commit()
         return run_id
+    except Exception as exc:
+        conn.rollback()
+        _raise_db_error(exc)
     finally:
         conn.close()
 
@@ -268,15 +310,23 @@ def parse_since(value: str, *, now: datetime | None = None) -> datetime:
     if rel:
         amount = int(rel.group(1))
         unit = rel.group(2).lower()
-        delta = {
-            "d": timedelta(days=amount),
-            "h": timedelta(hours=amount),
-            "m": timedelta(minutes=amount),
-            "s": timedelta(seconds=amount),
-        }[unit]
-        return now_utc - delta
+        try:
+            delta = {
+                "d": timedelta(days=amount),
+                "h": timedelta(hours=amount),
+                "m": timedelta(minutes=amount),
+                "s": timedelta(seconds=amount),
+            }[unit]
+        except OverflowError as exc:
+            raise HistoryError("--since window is too large") from exc
+        try:
+            return now_utc - delta
+        except OverflowError as exc:
+            raise HistoryError("--since window is too large") from exc
 
-    iso = raw.replace("Z", "+00:00")
+    iso = raw
+    if iso.endswith(("Z", "z")):
+        iso = iso[:-1] + "+00:00"
     try:
         parsed = datetime.fromisoformat(iso)
     except ValueError as exc:
@@ -296,6 +346,7 @@ def new_findings_since(
     since: datetime | str,
     *,
     db_path: Path | None = None,
+    repo_id: str | None = None,
     now: datetime | None = None,
 ) -> list[HistoryFinding]:
     """Return findings whose fingerprint was first seen at or after ``since``.
@@ -310,32 +361,36 @@ def new_findings_since(
 
     conn = open_history(db_path)
     try:
-        rows = conn.execute(
-            """
-            SELECT
-                f.entity,
-                f.severity,
-                f.finding_fingerprint,
-                f.path_fingerprint,
-                f.value_fingerprint,
-                f.config_hash,
-                f.scanned_at,
-                f.repo_id,
-                f.tool_version,
-                f.schema_version
-            FROM findings_meta AS f
-            INNER JOIN (
-                SELECT finding_fingerprint, MIN(scanned_at) AS first_seen
-                FROM findings_meta
-                GROUP BY finding_fingerprint
-            ) AS first
-              ON f.finding_fingerprint = first.finding_fingerprint
-             AND f.scanned_at = first.first_seen
-            WHERE first.first_seen >= ?
-            ORDER BY f.scanned_at ASC, f.finding_fingerprint ASC
-            """,
-            (since_iso,),
-        ).fetchall()
+        try:
+            rows = conn.execute(
+                """
+                SELECT
+                    f.entity,
+                    f.severity,
+                    f.finding_fingerprint,
+                    f.path_fingerprint,
+                    f.value_fingerprint,
+                    f.config_hash,
+                    f.scanned_at,
+                    f.repo_id,
+                    f.tool_version,
+                    f.schema_version
+                FROM findings_meta AS f
+                INNER JOIN (
+                    SELECT finding_fingerprint, MIN(id) AS first_id
+                    FROM findings_meta
+                    WHERE (? IS NULL OR repo_id = ?)
+                    GROUP BY finding_fingerprint
+                ) AS first
+                  ON f.id = first.first_id
+                WHERE f.scanned_at >= ?
+                  AND (? IS NULL OR f.repo_id = ?)
+                ORDER BY f.scanned_at ASC, f.finding_fingerprint ASC
+                """,
+                (repo_id, repo_id, since_iso, repo_id, repo_id),
+            ).fetchall()
+        except Exception as exc:
+            _raise_db_error(exc)
         results: list[HistoryFinding] = []
         for row in rows:
             item = HistoryFinding(
@@ -350,7 +405,11 @@ def new_findings_since(
                 tool_version=row["tool_version"],
                 schema_version=int(row["schema_version"]),
             )
-            assert_no_forbidden_metadata(item.as_dict())
+            data = item.as_dict()
+            try:
+                assert_no_forbidden_metadata(data)
+            except ValueError as exc:
+                raise HistoryError(str(exc)) from exc
             results.append(item)
         return results
     finally:
@@ -360,35 +419,43 @@ def new_findings_since(
 def latest_metadata_records(
     *,
     db_path: Path | None = None,
+    repo_id: str | None = None,
     limit_runs: int = 1,
 ) -> list[dict[str, Any]]:
     """Return metadata finding dicts from the most recent run(s)."""
     conn = open_history(db_path)
     try:
-        run_rows = conn.execute(
-            """
-            SELECT id FROM runs
-            ORDER BY scanned_at DESC, id DESC
-            LIMIT ?
-            """,
-            (limit_runs,),
-        ).fetchall()
+        try:
+            run_rows = conn.execute(
+                """
+                SELECT id FROM runs
+                WHERE (? IS NULL OR repo_id = ?)
+                ORDER BY scanned_at DESC, id DESC
+                LIMIT ?
+                """,
+                (repo_id, repo_id, limit_runs),
+            ).fetchall()
+        except Exception as exc:
+            _raise_db_error(exc)
         if not run_rows:
             return []
         run_ids = [int(r["id"]) for r in run_rows]
         placeholders = ",".join("?" for _ in run_ids)
-        rows = conn.execute(
-            f"""
-            SELECT
-                entity, severity, finding_fingerprint, path_fingerprint,
-                value_fingerprint, config_hash, scanned_at, repo_id,
-                tool_version, schema_version
-            FROM findings_meta
-            WHERE run_id IN ({placeholders})
-            ORDER BY scanned_at ASC, finding_fingerprint ASC
-            """,
-            run_ids,
-        ).fetchall()
+        try:
+            rows = conn.execute(
+                f"""
+                SELECT
+                    entity, severity, finding_fingerprint, path_fingerprint,
+                    value_fingerprint, config_hash, scanned_at, repo_id,
+                    tool_version, schema_version
+                FROM findings_meta
+                WHERE run_id IN ({placeholders})
+                ORDER BY scanned_at ASC, finding_fingerprint ASC
+                """,
+                run_ids,
+            ).fetchall()
+        except Exception as exc:
+            _raise_db_error(exc)
         out: list[dict[str, Any]] = []
         for row in rows:
             item = HistoryFinding(
@@ -404,7 +471,10 @@ def latest_metadata_records(
                 schema_version=int(row["schema_version"]),
             )
             data = item.as_dict()
-            assert_no_forbidden_metadata(data)
+            try:
+                assert_no_forbidden_metadata(data)
+            except ValueError as exc:
+                raise HistoryError(str(exc)) from exc
             out.append(data)
         return out
     finally:
@@ -420,8 +490,10 @@ def records_from_document(doc: dict[str, Any]) -> list[dict[str, Any]]:
     for item in findings:
         if not isinstance(item, dict):
             raise HistoryError("each metadata finding must be an object")
-        assert_no_forbidden_metadata(item)
-        out.append(dict(item))
+        try:
+            out.append(coerce_metadata_record(item))
+        except ValueError as exc:
+            raise HistoryError(str(exc)) from exc
     return out
 
 
@@ -431,7 +503,7 @@ def summarize_payload(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
     by_severity: dict[str, int] = {}
     material: list[dict[str, Any]] = []
     for record in records:
-        assert_no_forbidden_metadata(record)
+        _check_metadata_record(record)
         material.append(record)
         entity = str(record.get("entity", "?"))
         severity = str(record.get("severity", "?"))
