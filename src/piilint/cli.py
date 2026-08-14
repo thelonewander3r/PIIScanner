@@ -11,10 +11,24 @@ from rich.console import Console
 
 from piilint import __version__
 from piilint.baseline import BaselineError, load_baseline, subtract_baseline, write_baseline
-from piilint.config import ConfigError, load_config
+from piilint.config import Config, ConfigError, load_config
 from piilint.engine import ScanResult, scan_path
 from piilint.findings import Severity
 from piilint.gitutil import GitError, find_repo_root, staged_files
+from piilint.history import (
+    HistoryError,
+    latest_metadata_records,
+    new_findings_since,
+    parse_since,
+    record_metadata_run,
+    records_from_document,
+    summarize_payload,
+)
+from piilint.metadata import (
+    build_metadata_document,
+    serialize_metadata_document,
+    workspace_repo_id,
+)
 from piilint.recognizers import ner as ner_mod
 from piilint.redact import RedactError, redact_tree
 from piilint.reporters import render_console, render_json, render_sarif
@@ -34,6 +48,29 @@ app = typer.Typer(
 SEVERITY_RANK = {Severity.LOW: 1, Severity.MEDIUM: 2, Severity.HIGH: 3}
 
 OutputFormat = Literal["console", "json", "sarif"]
+
+
+def _safe_os_error_message(exc: OSError, *, context: str) -> str:
+    """Return a concise OSError message without raw absolute paths."""
+    detail = getattr(exc, "filename", None)
+    if detail:
+        base = Path(str(detail)).name
+        return f"{context}: {type(exc).__name__} ({base})"
+    return f"{context}: {type(exc).__name__}"
+
+
+def _exit_history_error(exc: HistoryError) -> None:
+    typer.secho(f"History error: {exc}", fg=typer.colors.RED, err=True)
+    raise typer.Exit(2) from exc
+
+
+def _exit_history_os_error(exc: OSError, *, context: str) -> None:
+    typer.secho(
+        _safe_os_error_message(exc, context=context),
+        fg=typer.colors.RED,
+        err=True,
+    )
+    raise typer.Exit(2) from exc
 
 
 def _fail_on_rank(name: str) -> int:
@@ -68,39 +105,22 @@ def _resolve_staged_only_paths(target: Path) -> tuple[list[Path], int]:
     return selected, len(staged)
 
 
-def _run_scan(
+def _prepare_scan(
     path: Path,
     *,
-    fail_on: str | None,
-    min_confidence: float | None,
-    enable_ip: bool | None,
-    enable_ner: bool,
-    sample_rows: int | None,
-    exclude: list[str] | None,
-    baseline: Path | None,
-    staged: bool,
-    output_format: OutputFormat,
-    show_matches: bool,
-) -> None:
+    fail_on: str | None = None,
+    min_confidence: float | None = None,
+    enable_ip: bool | None = None,
+    enable_ner: bool = False,
+    sample_rows: int | None = None,
+    exclude: list[str] | None = None,
+    baseline: Path | None = None,
+    staged: bool = False,
+) -> tuple[Config, ScanResult, int]:
+    """Load config, scan, optional baseline subtract. Returns (config, result, fail threshold)."""
     if not path.exists():
         typer.secho(f"Path not found: {path}", fg=typer.colors.RED, err=True)
         raise typer.Exit(2)
-
-    if show_matches:
-        if output_format != "console":
-            typer.secho(
-                "--show-matches applies only to --format console",
-                fg=typer.colors.RED,
-                err=True,
-            )
-            raise typer.Exit(2)
-        if _ci_truthy():
-            typer.secho(
-                "--show-matches is refused when CI=true (local triage only)",
-                fg=typer.colors.RED,
-                err=True,
-            )
-            raise typer.Exit(2)
 
     try:
         config = load_config(
@@ -172,6 +192,51 @@ def _run_scan(
             files_scanned=result.files_scanned,
             elapsed_seconds=result.elapsed_seconds,
         )
+
+    return config, result, threshold
+
+
+def _run_scan(
+    path: Path,
+    *,
+    fail_on: str | None,
+    min_confidence: float | None,
+    enable_ip: bool | None,
+    enable_ner: bool,
+    sample_rows: int | None,
+    exclude: list[str] | None,
+    baseline: Path | None,
+    staged: bool,
+    output_format: OutputFormat,
+    show_matches: bool,
+) -> None:
+    if show_matches:
+        if output_format != "console":
+            typer.secho(
+                "--show-matches applies only to --format console",
+                fg=typer.colors.RED,
+                err=True,
+            )
+            raise typer.Exit(2)
+        if _ci_truthy():
+            typer.secho(
+                "--show-matches is refused when CI=true (local triage only)",
+                fg=typer.colors.RED,
+                err=True,
+            )
+            raise typer.Exit(2)
+
+    config, result, threshold = _prepare_scan(
+        path,
+        fail_on=fail_on,
+        min_confidence=min_confidence,
+        enable_ip=enable_ip,
+        enable_ner=enable_ner,
+        sample_rows=sample_rows,
+        exclude=exclude,
+        baseline=baseline,
+        staged=staged,
+    )
 
     if output_format == "json":
         typer.echo(render_json(result, config), nl=False)
@@ -437,6 +502,258 @@ def redact_cmd(
     raise typer.Exit(0)
 
 
+@app.command(
+    "report",
+    help="Emit metadata-only findings JSON and auto-record into local history (no network).",
+)
+def report_cmd(
+    path: Annotated[
+        Path,
+        typer.Argument(exists=False, readable=False, help="Target path."),
+    ] = Path("."),
+    metadata_only: Annotated[
+        bool,
+        typer.Option(
+            "--metadata-only",
+            help="Emit trust-boundary metadata JSON (required for this MVP).",
+        ),
+    ] = False,
+    output: Annotated[
+        Path | None,
+        typer.Option(
+            "--output",
+            "-o",
+            help="Write metadata JSON to FILE instead of stdout.",
+        ),
+    ] = None,
+    fail_on: Annotated[
+        str | None,
+        typer.Option("--fail-on", help="Minimum severity that fails CI (overrides config)."),
+    ] = None,
+    min_confidence: Annotated[
+        float | None,
+        typer.Option("--min-confidence", min=0.0, max=1.0, help="Drop findings below this."),
+    ] = None,
+    enable_ip: Annotated[
+        bool | None,
+        typer.Option("--enable-ip/--no-enable-ip", help="Enable IP address detection."),
+    ] = None,
+    sample: Annotated[
+        int | None,
+        typer.Option("--sample", help="Sample at most N rows per tabular file."),
+    ] = None,
+    exclude: Annotated[
+        list[str] | None,
+        typer.Option("--exclude", help="Glob to exclude (repeatable; overrides config exclude)."),
+    ] = None,
+    baseline: Annotated[
+        Path | None,
+        typer.Option(
+            "--baseline",
+            help="Subtract fingerprints from this baseline file (report new findings only).",
+        ),
+    ] = None,
+) -> None:
+    """Scan like ``scan``, emit metadata-only JSON, and record into local SQLite history.
+
+    Default ``piilint .`` / ``scan`` / ``baseline`` / ``redact`` do **not** write history.
+    ``report --metadata-only`` always records locally; it never opens a network socket.
+    """
+    if not metadata_only:
+        typer.secho(
+            "report requires --metadata-only in this MVP (full reports use scan --format json)",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(2)
+
+    config, result, threshold = _prepare_scan(
+        path,
+        fail_on=fail_on,
+        min_confidence=min_confidence,
+        enable_ip=enable_ip,
+        sample_rows=sample,
+        exclude=exclude,
+        baseline=baseline,
+    )
+    repo_id = workspace_repo_id(path)
+    doc = build_metadata_document(result.findings, config, repo_id=repo_id)
+    text_out = serialize_metadata_document(doc)
+
+    if output is not None:
+        try:
+            output.write_text(text_out, encoding="utf-8")
+        except OSError as exc:
+            typer.secho(
+                _safe_os_error_message(exc, context="Failed to write report"),
+                fg=typer.colors.RED,
+                err=True,
+            )
+            raise typer.Exit(2) from exc
+    else:
+        typer.echo(text_out, nl=False)
+
+    try:
+        records = records_from_document(doc)
+        run_id = record_metadata_run(
+            records,
+            scanned_at=str(doc["scanned_at"]),
+            config_hash=str(doc["config_hash"]),
+            tool_version=__version__,
+            repo_id=repo_id,
+        )
+    except HistoryError as exc:
+        _exit_history_error(exc)
+    except OSError as exc:
+        _exit_history_os_error(exc, context="History write failed")
+
+    if output is not None:
+        typer.echo(
+            f"Wrote metadata-only report ({len(records)} finding(s)); "
+            f"recorded local history run {run_id}"
+        )
+    else:
+        typer.secho(
+            f"# recorded local history run {run_id}",
+            fg=typer.colors.GREEN,
+            err=True,
+        )
+
+    actionable = [f for f in result.findings if SEVERITY_RANK[f.severity] >= threshold]
+    raise typer.Exit(1 if actionable else 0)
+
+
+@app.command(
+    "history",
+    help="List finding_fingerprints first seen since a time (local SQLite; no network).",
+)
+def history_cmd(
+    since: Annotated[
+        str,
+        typer.Option(
+            "--since",
+            help="Relative window (7d, 24h, 30m) or ISO-8601 datetime.",
+        ),
+    ],
+    path: Annotated[
+        Path,
+        typer.Argument(
+            exists=False,
+            readable=False,
+            help="Workspace root used to scope local history (default: current directory).",
+        ),
+    ] = Path("."),
+    as_json: Annotated[
+        bool,
+        typer.Option("--json", help="Emit JSON instead of human-readable lines."),
+    ] = False,
+) -> None:
+    """Print new ``finding_fingerprint``s whose earliest local history sighting is after T."""
+    try:
+        since_dt = parse_since(since)
+        items = new_findings_since(since_dt, repo_id=workspace_repo_id(path))
+    except HistoryError as exc:
+        _exit_history_error(exc)
+    except OSError as exc:
+        _exit_history_os_error(exc, context="History read failed")
+
+    if as_json:
+        import json
+
+        payload = {
+            "count": len(items),
+            "findings": [i.as_dict() for i in items],
+            "since": since_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        }
+        payload_text = json.dumps(payload, sort_keys=True, indent=2, ensure_ascii=False) + "\n"
+        typer.echo(payload_text, nl=False)
+        raise typer.Exit(0)
+
+    typer.echo(
+        f"New finding_fingerprint(s) since {since_dt.strftime('%Y-%m-%dT%H:%M:%SZ')} "
+        f"({len(items)}):"
+    )
+    if not items:
+        typer.echo("(none)")
+        raise typer.Exit(0)
+    for item in items:
+        typer.echo(
+            f"{item.scanned_at}  {item.severity:<6}  {item.entity:<12}  {item.finding_fingerprint}"
+        )
+    raise typer.Exit(0)
+
+
+@app.command(
+    "sync",
+    help="Opt-in metadata sync helpers (dry-run only in this MVP; never opens sockets).",
+)
+def sync_cmd(
+    metadata: Annotated[
+        bool,
+        typer.Option(
+            "--metadata",
+            help="Operate on metadata-only findings payload.",
+        ),
+    ] = False,
+    dry_run: Annotated[
+        bool,
+        typer.Option(
+            "--dry-run",
+            help="Print counts / byte size / destination placeholder; send nothing.",
+        ),
+    ] = False,
+    path: Annotated[
+        Path,
+        typer.Argument(
+            exists=False,
+            readable=False,
+            help="Workspace root used to scope local history (default: current directory).",
+        ),
+    ] = Path("."),
+) -> None:
+    """Dry-run metadata sync summary. Real upload is out of scope for Slice B local MVP."""
+    if not metadata:
+        typer.secho("sync requires --metadata in this MVP", fg=typer.colors.RED, err=True)
+        raise typer.Exit(2)
+    if not dry_run:
+        typer.secho(
+            "Real upload is not implemented. Use: piilint sync --metadata --dry-run",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(2)
+
+    # Intentionally no urllib/httpx/socket usage — local DB read only.
+    try:
+        records = latest_metadata_records(
+            limit_runs=1,
+            repo_id=workspace_repo_id(path),
+        )
+        summary = summarize_payload(records)
+    except HistoryError as exc:
+        _exit_history_error(exc)
+    except OSError as exc:
+        _exit_history_os_error(exc, context="History read failed")
+
+    typer.echo("sync --metadata --dry-run (no network; nothing sent)")
+    typer.echo(f"destination: {summary['destination']}")
+    typer.echo(f"findings: {summary['finding_count']}")
+    typer.echo(f"payload_bytes: {summary['payload_bytes']}")
+    typer.echo("by_entity:")
+    if summary["by_entity"]:
+        for key, count in summary["by_entity"].items():
+            typer.echo(f"  {key}: {count}")
+    else:
+        typer.echo("  (none)")
+    typer.echo("by_severity:")
+    if summary["by_severity"]:
+        for key, count in summary["by_severity"].items():
+            typer.echo(f"  {key}: {count}")
+    else:
+        typer.echo("  (none)")
+    raise typer.Exit(0)
+
+
 @app.command("setup-ner", help="Download the English spaCy model for optional NER.")
 def setup_ner_cmd(
     model: Annotated[
@@ -477,7 +794,18 @@ def run() -> None:
         typer.echo(__version__)
         raise SystemExit(0)
     # `piilint .` / `piilint PATH` → treat as scan when first token is not a command/flag
-    known = {"scan", "baseline", "redact", "setup-ner", "--help", "-h", "help"}
+    known = {
+        "scan",
+        "baseline",
+        "redact",
+        "setup-ner",
+        "report",
+        "history",
+        "sync",
+        "--help",
+        "-h",
+        "help",
+    }
     if argv and argv[0] not in known and not argv[0].startswith("-"):
         sys.argv = [sys.argv[0], "scan", *argv]
     elif not argv:

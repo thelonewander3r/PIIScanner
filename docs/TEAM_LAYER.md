@@ -1,6 +1,6 @@
 ---
 title: Team layer — design (Sprint 14)
-status: design
+status: design + Slice B local MVP in progress
 updated: 2026-08-12
 tracking: https://github.com/thelonewander3r/PIIScanner/issues/32
 ---
@@ -119,6 +119,19 @@ Per finding (or per "new finding" event):
 - Server stores metadata rows; UI or CLI feed: "new `finding_fingerprint`s since T for workspace W".
 - Diff semantics mirror local baseline subtract (`subtract_baseline`) but across time/repos using the **same** fingerprints.
 
+
+### Slice B local MVP status (Sprint 15)
+
+**In progress / landing:** local-only implementation of Slice B without hosted upload:
+
+- `piilint report --metadata-only [-o FILE]` — scan + metadata JSON + **auto-record** into local SQLite
+- `piilint history --since 7d|ISO` — new `finding_fingerprint`s first seen after T
+- `piilint sync --metadata --dry-run` — counts / payload bytes / destination `<not configured>`; **no sockets**
+- DB: Windows `%LOCALAPPDATA%\piilint\history.sqlite3`; Unix `$XDG_DATA_HOME/piilint/history.sqlite3` (overrides: `PIILINT_HISTORY_PATH`, `PIILINT_DATA_DIR`)
+- Tracking: [#37](https://github.com/thelonewander3r/PIIScanner/issues/37)
+
+Real cloud sync, auth, and Slice A/C remain out of scope until Emanuel’s host/auth answers.
+
 ### Slice C — sketch
 
 - Org baseline artifact = versioned list of `finding_fingerprint`s (same as `baseline.py`), scoped to workspace ± repo_id.
@@ -203,7 +216,7 @@ Deletion: workspace admin can purge metadata and baselines; client should suppor
 
 ## 8. Open questions for Emanuel
 
-1. **Which slice first for the first build sprint?** Design recommends **A (policy packs)** — confirm or override.
+1. **Which slice first for the first build sprint?** Design recommended **A**; **Emanuel overrode → B first** (local metadata history MVP, [#37](https://github.com/thelonewander3r/PIIScanner/issues/37)).
 2. **Pricing:** per seat, per workspace, per active repo, or flat team tier? Free tier limits (e.g. one pack, no history)?
 3. **Hosted vs self-host:** SaaS-only MVP, self-host image in v1, or SaaS first with self-host later?
 4. **GitHub App vs fine-grained PAT** (and required scopes) for org binding + CI?
@@ -223,7 +236,8 @@ Deletion: workspace admin can purge metadata and baselines; client should suppor
 - [x] Reuse `fingerprint_for` / `value_sha256` / baseline fingerprints / `config_hash` — **no parallel model**
 - [x] No crippleware; no login-required-to-scan
 - [x] No compliance certification language
-- [x] Docs-only this sprint; optional local metadata-export spike **skipped** (nice-to-have; keep Local Tester docs-light / N/A)
+- [x] Docs-only Sprint 14; optional local metadata-export spike skipped then
+- [ ] Sprint 15 Slice B local MVP (report/history/sync dry-run) — see note under §4
 
 ---
 
