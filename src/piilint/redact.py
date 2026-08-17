@@ -467,7 +467,7 @@ def _redact_xlsx_file(
     config: Config,
     rel_path: str,
 ) -> int:
-    """Rewrite string cells into a new workbook under ``dest`` (stretch Sprint 11)."""
+    """Rewrite string and numeric PII cells into a new workbook under ``dest``."""
     try:
         from openpyxl import load_workbook
     except ImportError as exc:
@@ -486,10 +486,12 @@ def _redact_xlsx_file(
         for row in sheet.iter_rows():
             for cell in row:
                 value = cell.value
-                if value is None or isinstance(value, (int, float, bool)):
-                    # Keep numbers/bools unchanged.
+                if value is None or isinstance(value, bool):
+                    # Keep empty/bools unchanged. Numeric PII is stringified below.
                     continue
-                text = str(value).strip() if value is not None else ""
+                if isinstance(value, float) and value != value:  # NaN
+                    continue
+                text = str(value).strip()
                 if not text:
                     continue
                 if cell.row == 1:
@@ -503,6 +505,7 @@ def _redact_xlsx_file(
                     context_key=context,
                 )
                 if n:
+                    # Mask as text — a numeric phone cannot stay a number.
                     cell.value = redacted
                     total += n
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `piilint redact` now masks PII in Excel numeric cells (e.g. NANP phones stored as numbers), writing the mask as text. Scan already found these; redact previously left them unchanged. Tracking [#45](https://github.com/thelonewander3r/PIIScanner/issues/45) / [#44](https://github.com/thelonewander3r/PIIScanner/issues/44).
+
 ## [0.2.0] — 2026-08-17
 
 Released on [PyPI](https://pypi.org/p/piilint). Published via OIDC trusted publisher (`.github/workflows/release.yml`) after tag `v0.2.0`.
