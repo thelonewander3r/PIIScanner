@@ -162,3 +162,29 @@ def test_redact_parquet_string_columns(tmp_path: Path) -> None:
     after = scan_path(out)
     before = scan_path(CORPUS_PARQUET)
     assert len(after.findings) <= len(before.findings)
+
+
+def test_filter_matches_drops_disabled_person() -> None:
+    """Policy drops PERSON unless entity_enabled is on (the #49 redact --ner gap)."""
+    from piilint.recognizers import Match
+    from piilint.redact import _filter_matches
+
+    text = "Agent Alice Exampleton"
+    matches = [
+        Match(
+            entity=EntityType.PERSON,
+            value="Alice Exampleton",
+            start=6,
+            end=22,
+            confidence=0.85,
+        )
+    ]
+    cfg = default_config()
+    assert cfg.entity_enabled[EntityType.PERSON] is False
+    assert _filter_matches(text, matches, config=cfg, rel_path="calls.xlsx") == []
+
+    cfg.entity_enabled[EntityType.PERSON] = True
+    kept = _filter_matches(text, matches, config=cfg, rel_path="calls.xlsx")
+    assert len(kept) == 1
+    assert kept[0].value == "Alice Exampleton"
+    assert kept[0].entity == EntityType.PERSON

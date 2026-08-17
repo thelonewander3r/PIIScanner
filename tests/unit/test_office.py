@@ -341,3 +341,54 @@ def test_cli_redact_pdf(tmp_path: Path) -> None:
     for raw in PDF_PLANTED:
         assert raw not in extracted
         assert raw not in result.output
+
+
+AGENT_NAMES = ["Alice Exampleton", "Bob Sampleton"]
+AGENT_PHONES = ["2127350182", "4159032741"]
+
+
+def _write_agent_xlsx(path: Path) -> None:
+    """Synthetic call-log: Agent text column + numeric phones. Never real PII."""
+    from openpyxl import Workbook
+
+    wb = Workbook()
+    sheet = wb.active
+    assert sheet is not None
+    sheet.title = "Calls"
+    sheet.append(["Agent", "Phone", "Duration"])
+    sheet.append(["Alice Exampleton", 2127350182, 42])
+    sheet.append(["Bob Sampleton", 4159032741, 17])
+    path.parent.mkdir(parents=True, exist_ok=True)
+    wb.save(path)
+
+
+def test_redact_xlsx_without_ner_leaves_names(tmp_path: Path) -> None:
+    src = tmp_path / "agent_log.xlsx"
+    _write_agent_xlsx(src)
+    src_bytes = src.read_bytes()
+
+    out = tmp_path / "clean"
+    result = redact_tree(src, out, config=default_config())
+    assert result.files_written == 1
+    dest = out / "agent_log.xlsx"
+    assert dest.is_file()
+
+    wb = load_workbook(dest, data_only=True)
+    try:
+        values: list[str] = []
+        for row in wb.active.iter_rows():
+            for cell in row:
+                if cell.value is not None:
+                    values.append(str(cell.value))
+        blob = "\n".join(values)
+        for name in AGENT_NAMES:
+            assert name in blob
+        for raw in AGENT_PHONES:
+            assert raw not in blob
+        assert isinstance(wb.active["C2"].value, (int, float))
+        assert not isinstance(wb.active["C2"].value, bool)
+        assert int(wb.active["C2"].value) == 42
+    finally:
+        wb.close()
+
+    assert src.read_bytes() == src_bytes

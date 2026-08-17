@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `piilint redact --ner` now masks PERSON/ADDRESS in Excel cells the same way `scan --ner` reports them (policy now enables those entities for the redact run). Without `--ner`, names are left alone; phones still redact. Tracking [#49](https://github.com/thelonewander3r/PIIScanner/issues/49) / [#44](https://github.com/thelonewander3r/PIIScanner/issues/44).
 - `piilint redact` now masks PII in Excel numeric cells (e.g. NANP phones stored as numbers), writing the mask as text. Scan already found these; redact previously left them unchanged. Tracking [#45](https://github.com/thelonewander3r/PIIScanner/issues/45) / [#44](https://github.com/thelonewander3r/PIIScanner/issues/44).
 
 ## [0.2.0] — 2026-08-17
