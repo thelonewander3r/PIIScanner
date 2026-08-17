@@ -1,7 +1,7 @@
 ---
 title: piilint — Project management
 status: active
-updated: 2026-08-12
+updated: 2026-08-17
 owner: Product Owner
 ---
 
@@ -15,52 +15,69 @@ owner: Product Owner
 
 ## Status
 
-`piilint` **0.1.0** is on PyPI. Sprints 9–14 on `main`. **Sprint 15 IN PROGRESS** — Slice B local metadata history MVP (no network), tracking [#37](https://github.com/thelonewander3r/PIIScanner/issues/37).
+`piilint` **0.1.0** is on PyPI. Sprints 9–14 on `main` (redact, policy packs, office, locales, team-layer **design**).
 
-**Hold:** no `v0.2.0` / prod `v*` tags without Emanuel’s explicit go.  
-**Verify:** Local Tester (Windows) full local gate; **not** GitHub Actions.
+**Next (Emanuel 2026-08-17):** Sprint 16 — **0.2.0 release prep**. No tag until explicit go.  
+**Paused:** Slice B / team-layer build ([#37](https://github.com/thelonewander3r/PIIScanner/issues/37) parked). Get the CLI to the wild first.  
+**Verify:** Local Tester (Windows); not GitHub Actions.
 
+---
 
-## Sprint 15 — Slice B local metadata history (IN PROGRESS)
+## Sprint 16 — 0.2.0 release prep (NEXT)
 
-**Tracking:** [#37](https://github.com/thelonewander3r/PIIScanner/issues/37) · branch `feature/sprint15-metadata-history`
+**Goal:** Make `main` (sprints 9–13) installable as `piilint` 0.2.0, without publishing until Emanuel goes.
 
-### Scope
+**Tracking:** issue to be opened by Lead Dev from this scope call  
+**Branch:** off `main` → PR → Local Tester green + Lead LGTM → PO merge  
+**Hard rule:** do **not** push `v0.2.0` or publish until Emanuel’s explicit go.
 
-- Local SQLite history (`%LOCALAPPDATA%\piilint\history.sqlite3` on Windows; XDG on Unix)
-- `piilint report --metadata-only` (emit + auto-record; no network)
-- `piilint history --since`
-- `piilint sync --metadata --dry-run` (counts / bytes / `<not configured>`; send nothing)
-- Tests enforce forbidden metadata fields; default scan does not write history
+### In scope
 
-### Verify
+1. Version bump `0.1.0` → `0.2.0` (`pyproject.toml`, `__init__.py`, any other pins)
+2. CHANGELOG: fold Unreleased (redact, policy packs, office xlsx/pdf/docx, locales) into `[0.2.0]`; **omit** unfinished Slice B
+3. README: what’s new + supported formats; PyPI install still primary
+4. `docs/RELEASE.md`: 0.2.0 prep checklist; Local Tester gates (not GHA); same tag runbook as 0.1.0
+5. Local `uv build` dry-run; Local Tester: ruff/mypy/pytest + package-smoke + office
+6. PROJECT.md this sprint
 
-Local Tester (Windows) — full `uv sync --extra dev` + ruff / mypy / pytest / `piilint --version`. **Not GHA.**
+### Out of scope
 
-## Sprint 14 — Team layer design (DONE)
+- Cutting `v0.2.0` / PyPI publish
+- TestPyPI unless Emanuel asks
+- Slice B / team SaaS
+- New features
 
-**Merged:** [PR #35](https://github.com/thelonewander3r/PIIScanner/pull/35) · closes [#32](https://github.com/thelonewander3r/PIIScanner/issues/32)
+### Acceptance
 
-### Shipped
+- [ ] Prep PR merged (version + changelog + docs)
+- [ ] Local Tester green on the prep branch
+- [ ] Lead Dev LGTM
+- [ ] Written stop-before-tag (PO waits for Emanuel go)
 
-- [`docs/TEAM_LAYER.md`](./docs/TEAM_LAYER.md) — ICP, trust boundary (metadata only), MVP slice order **A→B→C** (shared policy → metadata history → org baselines), CLI proposals, privacy notes, open questions
-- Free CLI stays complete / offline forever by design
-- Optional metadata-export spike skipped (docs-only)
+### Roles
 
-### Follow-on
+- **Developer:** prep PR
+- **Lead Developer:** open issue, review
+- **Local Tester:** full local gate
+- **Product Owner:** merge prep; **stop before tag**
+- **Emanuel:** explicit go to tag
 
-Slice pick: **B first** (see Sprint 15 / [#37](https://github.com/thelonewander3r/PIIScanner/issues/37)). Remaining TEAM_LAYER §8 host/auth/pricing Qs still open before real sync.
+---
+
+## Paused — Sprint 15 Slice B
+
+[#37](https://github.com/thelonewander3r/PIIScanner/issues/37) — local metadata history. Parked; branch `feature/sprint15-metadata-history` exists, no PR. Resume only if Emanuel reorders.
 
 ---
 
 ## Recent done
 
+- Sprint 14 — team layer design — [#35](https://github.com/thelonewander3r/PIIScanner/pull/35)
 - Sprint 13 — docx — [#30](https://github.com/thelonewander3r/PIIScanner/pull/30)
-- Sprint 12 — locales — [#27](https://github.com/thelonewander3r/PIIScanner/pull/27)
-- Sprint 11 — xlsx/PDF — [#25](https://github.com/thelonewander3r/PIIScanner/pull/25)
+- Sprint 9–12 — redact, office, locales
 
 ---
 
 ## Later backlog
 
-Implement team layer after Emanuel go; IDE/PR UX; signed releases narrative; PDF redact; more locales.
+Ship 0.2.0 on go → adoption → then Slice B / team infra. IDE/PR UX; PDF redact; more locales.
