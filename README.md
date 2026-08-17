@@ -400,6 +400,7 @@ piilint scan ./docs
 - Without `[office]`, those files are skipped with a one-time stderr install hint; other formats keep scanning.
 - **No OCR** (image-only PDFs yield nothing). **No legacy `.doc`** (Word 97–2003 binary).
 - `piilint redact -o` can write cleaned `.xlsx`, `.docx`, and PDF **embedded-text** copies when `[office]` is installed (xlsx numeric cells included). `redact --ner` also masks PERSON/ADDRESS in xlsx when `[ner]` is installed. Still **no OCR**; image-only PDFs are a no-op. Layout may not be perfect (subset fonts / split glyphs).
+- **`--columns`** (xlsx/xlsm only) limits `scan` and `redact` to named headers or A1 letters (`Agent`, `ANI/From`, `H`, `Sheet1!H`). Repeatable or comma-separated. Unknown column, or `--columns` on a tree with no spreadsheets, exits **2** and lists valid headers. Other columns are left alone. Without `--columns`, behavior is unchanged.
 
 ## Redact (cleaned copies)
 
@@ -407,6 +408,9 @@ Write **copies** with PII spans replaced by the same masks as findings (no in-pl
 
 ```bash
 piilint redact ./data -o ./data-clean
+piilint redact calls.xlsx -o ./clean --columns Agent,ANI/From
+piilint scan calls.xlsx --columns Agent
+piilint scan calls.xlsx --columns H --columns Agent
 ```
 
 Supported today: **text** + **json/jsonl** + **csv/tsv** + **notebooks** + **parquet** (string columns) + **xlsx/xlsm** + **docx** + **PDF embedded text** (via optional `piilint[office]`; **no OCR** / **no legacy `.doc`**). PDF redact is best-effort selectable text only — image-only / empty-text PDFs are a no-op; layout may not be perfect (subset fonts / split glyphs). Uses the base wheel only (no new deps / no `presidio-anonymizer`). Honors the same config/policy as `scan` (allowlists, `# piilint: ignore`, entity toggles, `min_confidence`, excludes). Sources under the input path are never modified.

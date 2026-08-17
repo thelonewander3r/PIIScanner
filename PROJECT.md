@@ -17,30 +17,33 @@ owner: Product Owner
 
 `piilint` **0.2.0** is on PyPI (tag `v0.2.0` @ `5b889db`, OIDC Actions run [32043477260](https://github.com/thelonewander3r/PIIScanner/actions/runs/32043477260)). Repo is public. Sprints 9–16 on `main` (redact, policy packs, office, locales, team-layer **design**, Slice B local metadata history, 0.2.0 publish).
 
-**IN PROGRESS (2026-08-17):** Sprint 17 — **xlsx NER redact** ([#49](https://github.com/thelonewander3r/PIIScanner/issues/49)): `piilint redact --ner` must mask PERSON/ADDRESS that scan-with-NER already finds in xlsx. Parent [#44](https://github.com/thelonewander3r/PIIScanner/issues/44). Slice A xlsx numeric-cell redact **done** ([#47](https://github.com/thelonewander3r/PIIScanner/pull/47) / [#45](https://github.com/thelonewander3r/PIIScanner/issues/45)). Slice B PDF embedded-text redact **done** on `main` ([#46](https://github.com/thelonewander3r/PIIScanner/issues/46)). Local AI chats + PDF-layout parked.  
-**DONE (2026-08-17):** Sprint 16 — **0.2.0 published**. Tracking [#40](https://github.com/thelonewander3r/PIIScanner/issues/40). Post-publish docs: [#42](https://github.com/thelonewander3r/PIIScanner/issues/42).  
+**IN PROGRESS (2026-08-17):** `--columns` for xlsx/xlsm scan + redact ([#51](https://github.com/thelonewander3r/PIIScanner/issues/51)). Header-name auto-hints, Python `.clean(columns=)`, CSV/parquet column filters, local AI chats, and PDF-layout-preserving redact are parked.  
+**DONE (2026-08-17):** Sprint 17 xlsx NER redact ([#49](https://github.com/thelonewander3r/PIIScanner/issues/49) / [#50](https://github.com/thelonewander3r/PIIScanner/pull/50)); numeric-cell + PDF-text redact; Sprint 16 — **0.2.0 published** ([#40](https://github.com/thelonewander3r/PIIScanner/issues/40)).  
 **Paused:** further team-layer / hosted sync (Slice B local MVP already shipped; no SaaS).  
 **Verify:** Local Tester (Windows); **no GHA**.
 
 ---
 
-## Sprint 17 — redact gaps (IN PROGRESS)
+## --columns for sheets (IN PROGRESS)
 
-**Goal:** `piilint redact` should clean the same PII `scan` already finds in office files.  
-**Tracking:** [#44](https://github.com/thelonewander3r/PIIScanner/issues/44) (parent). Slice A **done** ([#47](https://github.com/thelonewander3r/PIIScanner/pull/47) / [#45](https://github.com/thelonewander3r/PIIScanner/issues/45)). Slice B PDF embedded-text **done** on `main` ([#46](https://github.com/thelonewander3r/PIIScanner/issues/46)). **This slice:** xlsx NER redact ([#49](https://github.com/thelonewander3r/PIIScanner/issues/49)).  
-**Parked:** local AI chats; PDF-layout-preserving redact.  
+**Goal:** Explicit `--columns` on `scan` and `redact` so call-log xlsx can target Agent / ANI/From without touching Skill.  
+**Tracking:** [#51](https://github.com/thelonewander3r/PIIScanner/issues/51).  
+**Parked:** header-name auto-hints; Python API `.clean(columns=)`; CSV/parquet column filters; local AI chats; PDF-layout-preserving redact.  
 **Verify:** Local Tester (Windows); **no GHA**.  
 **Hard stop:** no new `v*` tag / PyPI until Emanuel go.
 
-### In scope (xlsx NER redact — #49)
+### In scope (#51)
 
-1. `piilint redact --ner` masks PERSON/ADDRESS in xlsx/xlsm text cells (and any cell type scan already reports)
-2. Scan and redact stay consistent when `--ner` is on; `--ner` stays optional / off by default
-3. Synthetic fixture only (fake Agent-column names + numeric phones); copies via `-o` only
-4. No new production deps (Presidio/spaCy already in `[ner]`); existing office + NER tests stay green
+1. CLI `--columns` (repeatable and/or comma-separated) on `scan` and `redact`
+2. Header names (`Agent`, `ANI/From`) and A1 letters (`A`, `H`, `Sheet1!H`)
+3. Unknown column or `--columns` with no xlsx/xlsm in the target → exit 2 + valid headers
+4. xlsx/xlsm only; copies via `-o`; synthetic fixture; no new deps; `--ner` stays optional
 
 ### Out of scope
 
+- Header-name auto hints
+- Python API `.clean(columns=)`
+- CSV/parquet column filters
 - Making NER default
 - PDF layout-preserving redact (parked)
 - Local AI chats (parked)
@@ -116,4 +119,4 @@ owner: Product Owner
 
 ## Later backlog
 
-0.2.0 is shipped. Sprint 17 = redact gaps (#44; Slice A #47 done; Slice B #46 PDF embedded-text done; #49 xlsx NER redact in progress); local AI chats + PDF-layout parked. Adoption → then further team-layer / hosted sync. IDE/PR UX; more locales.
+0.2.0 is shipped. Sprint 17 redact gaps (#44) mostly done (numeric xlsx, PDF text, xlsx NER). **Now:** `--columns` (#51). Parked: header-hints, chats, PDF-layout. Adoption → then further team-layer / hosted sync. IDE/PR UX; more locales.

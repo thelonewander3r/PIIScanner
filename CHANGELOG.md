@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `scan` / `redact --columns` for Excel `.xlsx`/`.xlsm` (header names or A1 letters, including `Sheet1!H`). Repeatable or comma-separated. Unknown column or no spreadsheet in the target exits 2 with valid headers listed; other columns are untouched. xlsx/xlsm only this slice. Tracking [#51](https://github.com/thelonewander3r/PIIScanner/issues/51).
 - `piilint redact` now masks **embedded-text** PII in PDFs via existing `pypdf` (content-stream string replace; reconstruct fallback). Image-only / empty-text PDFs are a no-op with a clear message. Still **no OCR**; layout may not be perfect (subset fonts / split glyphs). Tracking [#46](https://github.com/thelonewander3r/PIIScanner/issues/46) / [#44](https://github.com/thelonewander3r/PIIScanner/issues/44).
 
 ### Fixed
