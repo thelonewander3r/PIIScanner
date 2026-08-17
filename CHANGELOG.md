@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.0] — 2026-08-17
 
-Prep for the next PyPI release of `piilint`. **Not tagged or published** until Emanuel's explicit go. `0.1.0` remains the published version on [PyPI](https://pypi.org/p/piilint).
+Released on [PyPI](https://pypi.org/p/piilint). Published via OIDC trusted publisher (`.github/workflows/release.yml`) after tag `v0.2.0`.
 
 ### Added
 

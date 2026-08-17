@@ -12,9 +12,9 @@ Local-first PII scanner for the files developers actually commit and send — no
 
 ---
 
-## What's new in 0.2.0 (prep)
+## What's new in 0.2.0
 
-This checkout is **0.2.0** — **not tagged and not on PyPI yet**. [PyPI](https://pypi.org/p/piilint) still serves **0.1.0** until Emanuel goes. Install from PyPI remains primary: `pip install piilint`.
+**0.2.0 is published** on [PyPI](https://pypi.org/p/piilint). Install from PyPI remains primary: `pip install piilint`.
 
 - **Office formats** via optional `piilint[office]`: Excel `.xlsx`/`.xlsm`, Word `.docx`, PDF embedded text (no OCR / no legacy `.doc`)
 - **Redact:** `piilint redact PATH -o OUT` writes cleaned copies (text, json/jsonl, csv/tsv, notebooks, parquet, xlsx, docx)
@@ -23,7 +23,7 @@ This checkout is **0.2.0** — **not tagged and not on PyPI yet**. [PyPI](https:
 - **Optional NER** still via `piilint[ner]`
 - **Local metadata history** (Slice B MVP, already on `main`): `report --metadata-only`, `history --since`, `sync --metadata --dry-run` — no network / no SaaS
 
-Further team-layer / hosted sync is paused. Tag `v0.2.0` waits on Emanuel.
+Further team-layer / hosted sync is paused.
 
 ---
 
@@ -31,7 +31,7 @@ Further team-layer / hosted sync is paused. Tag `v0.2.0` waits on Emanuel.
 
 ### 1. Install
 
-**From PyPI** ([piilint](https://pypi.org/p/piilint) — `0.1.0` published; `0.2.0` not on PyPI yet):
+**From PyPI** ([piilint](https://pypi.org/p/piilint) — `0.2.0` published):
 
 ```bash
 # recommended for CLI use
@@ -67,7 +67,7 @@ Exit codes: `0` clean / nothing staged · `1` findings at or above `--fail-on` �
 ```yaml
 repos:
   - repo: https://github.com/thelonewander3r/PIIScanner
-    rev: v0.1.0   # pin to a release tag
+    rev: v0.2.0   # pin to a release tag
     hooks:
       - id: piilint
         # Default: --staged --fail-on medium
@@ -79,7 +79,7 @@ repos:
 - uses: actions/checkout@v4
 - name: Run piilint
   id: piilint
-  uses: thelonewander3r/PIIScanner@v0.1.0   # or @main for latest
+  uses: thelonewander3r/PIIScanner@v0.2.0   # or @main for latest
   with:
     path: .
     fail-on: high
@@ -260,7 +260,7 @@ Add to your consuming project's `.pre-commit-config.yaml`:
 ```yaml
 repos:
   - repo: https://github.com/thelonewander3r/PIIScanner
-    rev: v0.1.0   # pin to a release tag
+    rev: v0.2.0   # pin to a release tag
     hooks:
       - id: piilint
         # Default args from the hook repo: --staged --fail-on medium
@@ -299,14 +299,14 @@ jobs:
 
       - name: Run piilint
         id: piilint
-        uses: thelonewander3r/PIIScanner@main   # pin to a tag when available
+        uses: thelonewander3r/PIIScanner@v0.2.0
         with:
           path: .
           fail-on: high
           format: sarif          # console | json | sarif
           # baseline: piilint-baseline.json
           # staged: "false"
-          # version: "0.1.0"     # install from PyPI; omit to pip-install action checkout
+          # version: "0.2.0"     # install from PyPI; omit to pip-install action checkout
           # extra-args: "--exclude 'vendor/**'"
 
       # SARIF upload is the caller's job — the action only writes the file.
@@ -347,7 +347,7 @@ jobs:
 ### PyPI trusted publisher checklist (maintainer)
 
 Full tag-day steps: [`docs/RELEASE.md`](./docs/RELEASE.md).  
-**Hard stop:** tag `v0.2.0` only after **Emanuel’s explicit go** (`v0.1.0` already published). No long-lived PyPI API tokens.
+**Hard stop:** do not cut the next `v*` tag until **Emanuel’s explicit go** (`v0.1.0` and `v0.2.0` already published). No long-lived PyPI API tokens.
 
 **Emanuel-only (PyPI UI)**
 
@@ -362,10 +362,10 @@ Full tag-day steps: [`docs/RELEASE.md`](./docs/RELEASE.md).
 
 3. Repo Settings → Environments → create **`pypi`** (recommend required reviewers / wait timer).
 
-**Then (after Emanuel go)**
+**Then (after Emanuel go for the next tag)**
 
 4. Do **not** store a PyPI API token in Actions secrets for this flow.
-5. From release commit on `main`: `git tag v0.2.0 && git push origin v0.2.0` → watch Actions **Release** → verify `uvx piilint --version` / `pipx install piilint`.
+5. From the release commit on `main`: `git tag vX.Y.Z && git push origin vX.Y.Z` → watch Actions **Release** → verify `uvx piilint --version` / `pipx install piilint`.
 
 ---
 
@@ -422,11 +422,11 @@ See [`examples/policies/README.md`](./examples/policies/README.md) for copy inst
 
 ## Status
 
-**`0.1.0` is published** on [PyPI](https://pypi.org/p/piilint) (tag `v0.1.0`, OIDC trusted publisher). This tree is **0.2.0 prep** — not tagged and not on PyPI yet.
+**`0.2.0` is published** on [PyPI](https://pypi.org/p/piilint) (tag `v0.2.0`, OIDC trusted publisher).
 
 **What's in 0.2.0:** office extras (`[office]` for xlsx/xlsm/docx/PDF text), `piilint redact`, locale IDs + `phone_regions`, example policy packs, optional NER (`[ner]`), and local metadata history (`report --metadata-only` / `history --since` / `sync --metadata --dry-run`; no network). Further team-layer / hosted sync is paused.
 
-Install from PyPI remains primary: `pip install piilint` (currently **0.1.0**). Future releases: [`docs/RELEASE.md`](./docs/RELEASE.md).
+Install from PyPI remains primary: `pip install piilint`. Future releases: [`docs/RELEASE.md`](./docs/RELEASE.md).
 
 ## Contributing & security
 
