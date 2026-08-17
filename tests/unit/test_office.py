@@ -13,6 +13,7 @@ pytest.importorskip("docx")
 
 from docx import Document
 from openpyxl import load_workbook
+from pypdf import PdfReader
 
 from piilint.cli import app
 from piilint.config import default_config
@@ -206,3 +207,137 @@ def test_redact_xlsx_numeric_phone_cells(tmp_path: Path) -> None:
     for raw in NUMERIC_PHONES:
         assert raw not in after_blob
     assert not any(f.entity == EntityType.PHONE for f in after.findings)
+
+
+def _write_simple_text_pdf(path: Path, lines: list[str]) -> None:
+    """Write a one-page PDF with contiguous Tj strings (pypdf only)."""
+    from pypdf import PdfWriter
+    from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
+
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+    font = DictionaryObject(
+        {
+            NameObject("/Type"): NameObject("/Font"),
+            NameObject("/Subtype"): NameObject("/Type1"),
+            NameObject("/BaseFont"): NameObject("/Helvetica"),
+        }
+    )
+    fonts = DictionaryObject({NameObject("/F1"): writer._add_object(font)})  # noqa: SLF001
+    page[NameObject("/Resources")] = DictionaryObject({NameObject("/Font"): fonts})
+
+    def _escape(value: str) -> str:
+        return value.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+
+    parts = ["BT /F1 12 Tf 50 750 Td"]
+    for index, line in enumerate(lines):
+        if index:
+            parts.append("0 -16 Td")
+        parts.append(f"({_escape(line)}) Tj")
+    parts.append("ET")
+    stream = DecodedStreamObject()
+    stream.set_data(" ".join(parts).encode("latin-1"))
+    page[NameObject("/Contents")] = writer._add_object(stream)  # noqa: SLF001
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("wb") as handle:
+        writer.write(handle)
+
+
+PDF_PLANTED = [
+    "customer.alpha@retailmail.test",
+    "234-56-7890",
+    "4532015112830366",
+]
+PDF_PHONE = "212-735-0182"
+
+
+def test_redact_pdf_embedded_text(tmp_path: Path) -> None:
+    src = CORPUS_PDF / "contacts.pdf"
+    src_bytes = src.read_bytes()
+
+    before = scan_path(src)
+    entities = {f.entity for f in before.findings}
+    assert EntityType.EMAIL in entities
+    assert EntityType.CREDIT_CARD in entities or EntityType.SSN_US in entities
+
+    out = tmp_path / "clean"
+    result = redact_tree(src, out, config=default_config())
+    assert result.files_written == 1
+    assert result.spans_redacted > 0
+    dest = out / "contacts.pdf"
+    assert dest.is_file()
+
+    after = scan_path(dest)
+    after_blob = "\n".join(
+        str(part) for f in after.findings for part in (f.masked_sample, f.normalized_value) if part
+    )
+    extracted = PdfReader(str(dest)).pages[0].extract_text() or ""
+    for raw in PDF_PLANTED:
+        assert raw not in extracted
+        assert raw not in after_blob
+
+    assert src.read_bytes() == src_bytes
+    src_text = PdfReader(str(src)).pages[0].extract_text() or ""
+    assert "customer.alpha@retailmail.test" in src_text
+
+
+def test_redact_pdf_synthetic_email_phone(tmp_path: Path) -> None:
+    src = tmp_path / "planted.pdf"
+    _write_simple_text_pdf(
+        src,
+        [
+            "email customer.alpha@retailmail.test",
+            f"phone {PDF_PHONE}",
+        ],
+    )
+    src_bytes = src.read_bytes()
+
+    before = scan_path(src)
+    entities = {f.entity for f in before.findings}
+    assert EntityType.EMAIL in entities
+    assert EntityType.PHONE in entities
+
+    out = tmp_path / "clean"
+    result = redact_tree(src, out, config=default_config())
+    assert result.files_written == 1
+    assert result.spans_redacted > 0
+    dest = out / "planted.pdf"
+    assert dest.is_file()
+
+    extracted = PdfReader(str(dest)).pages[0].extract_text() or ""
+    assert "customer.alpha@retailmail.test" not in extracted
+    assert PDF_PHONE not in extracted
+    after = scan_path(dest)
+    after_blob = "\n".join(
+        str(part) for f in after.findings for part in (f.masked_sample, f.normalized_value) if part
+    )
+    assert "customer.alpha@retailmail.test" not in after_blob
+    assert PDF_PHONE not in after_blob
+    assert src.read_bytes() == src_bytes
+
+
+def test_redact_pdf_blank_noop(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    src = CORPUS_PDF / "blank.pdf"
+    src_bytes = src.read_bytes()
+    out = tmp_path / "clean"
+    result = redact_tree(src, out, config=default_config())
+    captured = capsys.readouterr()
+    assert result.spans_redacted == 0
+    dest = out / "blank.pdf"
+    assert dest.is_file()
+    err = captured.err.lower()
+    assert "no ocr" in err or "no embedded text" in err or "no-op" in err
+    assert src.read_bytes() == src_bytes
+
+
+def test_cli_redact_pdf(tmp_path: Path) -> None:
+    runner = CliRunner()
+    out = tmp_path / "out"
+    result = runner.invoke(app, ["redact", str(CORPUS_PDF / "contacts.pdf"), "-o", str(out)])
+    assert result.exit_code == 0, result.output
+    dest = out / "contacts.pdf"
+    assert dest.is_file()
+    extracted = PdfReader(str(dest)).pages[0].extract_text() or ""
+    for raw in PDF_PLANTED:
+        assert raw not in extracted
+        assert raw not in result.output

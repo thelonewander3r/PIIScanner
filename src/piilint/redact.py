@@ -9,6 +9,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
@@ -21,7 +22,7 @@ from piilint.policy import apply_policy
 from piilint.recognizers import Match, RecognizerRegistry
 from piilint.walker import iter_files
 
-# Supported formats for redact (Sprint 9 + 10).
+# Supported formats for redact (Sprint 9 + 10 + office xlsx/docx/pdf).
 _TEXT = TextAdapter()
 
 
@@ -59,6 +60,8 @@ def _supported(path: Path) -> str | None:
         return "xlsx"
     if suffix == ".docx":
         return "docx"
+    if suffix == ".pdf":
+        return "pdf"
     if _TEXT.supports(path):
         return "text"
     return None
@@ -651,6 +654,220 @@ def _redact_docx_file(
     return total
 
 
+_PDF_TEXT_OPS = {b"Tj", b"TJ", b"'", b'"'}
+
+
+def _pdf_replace_in_operand(value: object, replacements: list[tuple[str, str]]) -> object:
+    """Replace raw PII substrings in a PDF text operand; leave numbers untouched."""
+    if isinstance(value, (int, float)):
+        return value
+    if isinstance(value, bytes):
+        try:
+            text = value.decode("latin-1")
+        except UnicodeDecodeError:
+            return value
+        new = text
+        for raw, masked in replacements:
+            if raw and raw in new:
+                new = new.replace(raw, masked)
+        if new == text:
+            return value
+        from pypdf.generic import create_string_object
+
+        return create_string_object(new)
+    if isinstance(value, str):
+        new = value
+        for raw, masked in replacements:
+            if raw and raw in new:
+                new = new.replace(raw, masked)
+        if new == value:
+            return value
+        from pypdf.generic import create_string_object
+
+        return create_string_object(new)
+    return value
+
+
+def _pdf_content_replace(page: Any, reader: Any, replacements: list[tuple[str, str]]) -> bool:
+    """Replace raw match strings in text-showing operators. Returns True if any changed."""
+    from pypdf.generic import ArrayObject, ContentStream, NameObject
+
+    contents = page.get_contents()
+    if contents is None:
+        return False
+    stream = ContentStream(contents, reader)
+    changed = False
+    new_ops: list[tuple[list[Any], bytes]] = []
+    for operands, operator in stream.operations:
+        ops = list(operands)
+        if operator in _PDF_TEXT_OPS and ops:
+            if operator == b"TJ":
+                items = list(ops[0])
+                new_items = [_pdf_replace_in_operand(item, replacements) for item in items]
+                if new_items != items:
+                    ops[0] = ArrayObject(new_items)
+                    changed = True
+            else:
+                idx = len(ops) - 1
+                new_val = _pdf_replace_in_operand(ops[idx], replacements)
+                if new_val != ops[idx]:
+                    ops[idx] = new_val
+                    changed = True
+        new_ops.append((ops, operator))
+    if changed:
+        stream.operations = new_ops
+        page[NameObject("/Contents")] = stream
+    return changed
+
+
+def _pdf_extract_text(page: Any) -> str:
+    try:
+        text = page.extract_text() or ""
+    except Exception:  # noqa: BLE001 — malformed page content
+        return ""
+    return text.replace("\r\n", "\n").replace("\r", "\n")
+
+
+def _pdf_page_still_has_raw(page: Any, replacements: list[tuple[str, str]]) -> bool:
+    text = _pdf_extract_text(page)
+    return any(raw in text for raw, _masked in replacements if raw)
+
+
+def _pdf_ensure_font(page: Any) -> None:
+    from pypdf.generic import DictionaryObject, NameObject
+
+    resources = page.get("/Resources")
+    if resources is None:
+        resources = DictionaryObject()
+        page[NameObject("/Resources")] = resources
+    else:
+        resources = resources.get_object()
+    fonts = resources.get("/Font")
+    if fonts is None:
+        fonts = DictionaryObject()
+        resources[NameObject("/Font")] = fonts
+    else:
+        fonts = fonts.get_object()
+    if "/F1" in fonts or NameObject("/F1") in fonts:
+        return
+    fonts[NameObject("/F1")] = DictionaryObject(
+        {
+            NameObject("/Type"): NameObject("/Font"),
+            NameObject("/Subtype"): NameObject("/Type1"),
+            NameObject("/BaseFont"): NameObject("/Helvetica"),
+        }
+    )
+
+
+def _pdf_reconstruct_page(page: Any, reader: Any, text: str) -> None:
+    """Rebuild a page content stream from redacted extracted text (layout may change)."""
+    from pypdf.generic import ContentStream, NameObject, NumberObject, create_string_object
+
+    lines = text.split("\n")
+    operations: list[tuple[list[Any], bytes]] = [
+        ([], b"BT"),
+        ([NameObject("/F1"), NumberObject(12)], b"Tf"),
+        ([NumberObject(50), NumberObject(750)], b"Td"),
+    ]
+    for index, line in enumerate(lines):
+        if index:
+            operations.append(([NumberObject(0), NumberObject(-16)], b"Td"))
+        operations.append(([create_string_object(line)], b"Tj"))
+    operations.append(([], b"ET"))
+    contents = page.get_contents()
+    stream = (
+        ContentStream(contents, reader) if contents is not None else ContentStream(None, reader)
+    )
+    stream.operations = operations
+    page[NameObject("/Contents")] = stream
+    _pdf_ensure_font(page)
+
+
+def _pdf_spans_for_text(
+    text: str,
+    *,
+    registry: RecognizerRegistry,
+    config: Config,
+    rel_path: str,
+    context_key: str,
+) -> list[_Span]:
+    matches = scan_text_matches(
+        text,
+        registry.enabled_recognizers(),
+        context_key=context_key,
+        min_confidence=config.scan.min_confidence,
+    )
+    return _dedupe_spans(
+        _filter_matches(text, matches, config=config, rel_path=rel_path, context_key=context_key)
+    )
+
+
+def _redact_pdf_file(
+    path: Path,
+    dest: Path,
+    *,
+    registry: RecognizerRegistry,
+    config: Config,
+    rel_path: str,
+) -> int:
+    """Rewrite embedded-text PII into a new PDF under ``dest`` (pypdf only; no OCR)."""
+    try:
+        from pypdf import PdfReader, PdfWriter
+        from pypdf.errors import PdfReadError
+    except ImportError as exc:
+        raise RedactError(
+            'PDF redact requires piilint[office]. Install with: pip install "piilint[office]"'
+        ) from exc
+
+    try:
+        reader = PdfReader(str(path))
+    except (OSError, PdfReadError, ValueError) as exc:
+        raise RedactError(f"Invalid PDF {rel_path}: {exc}") from exc
+
+    writer = PdfWriter()
+    total = 0
+    any_text = False
+    for page_idx, page in enumerate(reader.pages, start=1):
+        text = _pdf_extract_text(page)
+        if text.strip():
+            any_text = True
+        spans = _pdf_spans_for_text(
+            text,
+            registry=registry,
+            config=config,
+            rel_path=rel_path,
+            context_key=f"page{page_idx}",
+        )
+        if not spans:
+            writer.add_page(page)
+            continue
+        replacements = sorted(
+            {(span.value, mask_value(span.value, span.entity)) for span in spans},
+            key=lambda pair: len(pair[0]),
+            reverse=True,
+        )
+        replaced = _pdf_content_replace(page, reader, replacements)
+        if (not replaced) or _pdf_page_still_has_raw(page, replacements):
+            redacted = apply_span_replacements(text, spans)
+            _pdf_reconstruct_page(page, reader, redacted)
+        total += len(spans)
+        writer.add_page(page)
+
+    if not any_text:
+        print(
+            f"piilint: no embedded text in {rel_path} — PDF redact is a no-op (no OCR)",
+            file=sys.stderr,
+        )
+
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with dest.open("wb") as handle:
+            writer.write(handle)
+    except OSError as exc:
+        raise RedactError(f"Failed to write PDF {rel_path}: {exc}") from exc
+    return total
+
+
 def _safe_out_path(out_root: Path, rel: str) -> Path:
     """Resolve destination under out_root; refuse escapes."""
     # Normalize rel to forbid absolute / drive / .. escape
@@ -728,6 +945,10 @@ def redact_tree(
                 )
             elif kind == "docx":
                 n = _redact_docx_file(
+                    file_path, dest, registry=registry, config=config, rel_path=rel
+                )
+            elif kind == "pdf":
+                n = _redact_pdf_file(
                     file_path, dest, registry=registry, config=config, rel_path=rel
                 )
             else:

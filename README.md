@@ -17,7 +17,7 @@ Local-first PII scanner for the files developers actually commit and send — no
 **0.2.0 is published** on [PyPI](https://pypi.org/p/piilint). Install from PyPI remains primary: `pip install piilint`.
 
 - **Office formats** via optional `piilint[office]`: Excel `.xlsx`/`.xlsm`, Word `.docx`, PDF embedded text (no OCR / no legacy `.doc`)
-- **Redact:** `piilint redact PATH -o OUT` writes cleaned copies (text, json/jsonl, csv/tsv, notebooks, parquet, xlsx, docx)
+- **Redact:** `piilint redact PATH -o OUT` writes cleaned copies (text, json/jsonl, csv/tsv, notebooks, parquet, xlsx, docx, PDF embedded text)
 - **Locales:** `SIN_CA` / `NINO_UK` / `BSN_NL` + `scan.phone_region` / `scan.phone_regions`
 - **Policy packs:** `examples/policies/` (`strict-ci`, `data-eng`, `open-source-lib`)
 - **Optional NER** still via `piilint[ner]`
@@ -398,7 +398,7 @@ piilint scan ./docs
 
 - Without `[office]`, those files are skipped with a one-time stderr install hint; other formats keep scanning.
 - **No OCR** (image-only PDFs yield nothing). **No legacy `.doc`** (Word 97–2003 binary).
-- `piilint redact -o` can write cleaned `.xlsx` and `.docx` copies when `[office]` is installed (xlsx numeric cells included). PDF redact is deferred.
+- `piilint redact -o` can write cleaned `.xlsx`, `.docx`, and PDF **embedded-text** copies when `[office]` is installed (xlsx numeric cells included). Still **no OCR**; image-only PDFs are a no-op. Layout may not be perfect (subset fonts / split glyphs).
 
 ## Redact (cleaned copies)
 
@@ -408,7 +408,7 @@ Write **copies** with PII spans replaced by the same masks as findings (no in-pl
 piilint redact ./data -o ./data-clean
 ```
 
-Supported today: **text** + **json/jsonl** + **csv/tsv** + **notebooks** + **parquet** (string columns) + **xlsx/xlsm** + **docx** + **PDF embedded text** (via optional `piilint[office]`; **no OCR** / **no legacy `.doc`**). PDF redact deferred. Uses the base wheel only (no new deps / no `presidio-anonymizer`). Honors the same config/policy as `scan` (allowlists, `# piilint: ignore`, entity toggles, `min_confidence`, excludes). Sources under the input path are never modified.
+Supported today: **text** + **json/jsonl** + **csv/tsv** + **notebooks** + **parquet** (string columns) + **xlsx/xlsm** + **docx** + **PDF embedded text** (via optional `piilint[office]`; **no OCR** / **no legacy `.doc`**). PDF redact is best-effort selectable text only — image-only / empty-text PDFs are a no-op; layout may not be perfect (subset fonts / split glyphs). Uses the base wheel only (no new deps / no `presidio-anonymizer`). Honors the same config/policy as `scan` (allowlists, `# piilint: ignore`, entity toggles, `min_confidence`, excludes). Sources under the input path are never modified.
 
 ## Example policy packs
 

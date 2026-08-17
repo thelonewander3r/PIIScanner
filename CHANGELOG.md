@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `piilint redact` now masks **embedded-text** PII in PDFs via existing `pypdf` (content-stream string replace; reconstruct fallback). Image-only / empty-text PDFs are a no-op with a clear message. Still **no OCR**; layout may not be perfect (subset fonts / split glyphs). Tracking [#46](https://github.com/thelonewander3r/PIIScanner/issues/46) / [#44](https://github.com/thelonewander3r/PIIScanner/issues/44).
+
 ### Fixed
 
 - `piilint redact` now masks PII in Excel numeric cells (e.g. NANP phones stored as numbers), writing the mask as text. Scan already found these; redact previously left them unchanged. Tracking [#45](https://github.com/thelonewander3r/PIIScanner/issues/45) / [#44](https://github.com/thelonewander3r/PIIScanner/issues/44).

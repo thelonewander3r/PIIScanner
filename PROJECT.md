@@ -17,7 +17,7 @@ owner: Product Owner
 
 `piilint` **0.2.0** is on PyPI (tag `v0.2.0` @ `5b889db`, OIDC Actions run [32043477260](https://github.com/thelonewander3r/PIIScanner/actions/runs/32043477260)). Repo is public. Sprints 9–16 on `main` (redact, policy packs, office, locales, team-layer **design**, Slice B local metadata history, 0.2.0 publish).
 
-**IN PROGRESS (2026-08-17):** Sprint 17 — **redact gaps**. Parent [#44](https://github.com/thelonewander3r/PIIScanner/issues/44): xlsx numeric-cell redact [#45](https://github.com/thelonewander3r/PIIScanner/issues/45) now; PDF redact next [#46](https://github.com/thelonewander3r/PIIScanner/issues/46). Local AI chats parked.  
+**IN PROGRESS (2026-08-17):** Sprint 17 — **redact gaps**. Parent [#44](https://github.com/thelonewander3r/PIIScanner/issues/44). Slice A xlsx numeric-cell redact **done** ([#47](https://github.com/thelonewander3r/PIIScanner/pull/47) / [#45](https://github.com/thelonewander3r/PIIScanner/issues/45)). Slice B PDF embedded-text redact **in progress** ([#46](https://github.com/thelonewander3r/PIIScanner/issues/46)). Local AI chats parked.  
 **DONE (2026-08-17):** Sprint 16 — **0.2.0 published**. Tracking [#40](https://github.com/thelonewander3r/PIIScanner/issues/40). Post-publish docs: [#42](https://github.com/thelonewander3r/PIIScanner/issues/42).  
 **Paused:** further team-layer / hosted sync (Slice B local MVP already shipped; no SaaS).  
 **Verify:** Local Tester (Windows); **no GHA**.
@@ -27,20 +27,21 @@ owner: Product Owner
 ## Sprint 17 — redact gaps (IN PROGRESS)
 
 **Goal:** `piilint redact` should clean the same PII `scan` already finds in office files.  
-**Tracking:** [#44](https://github.com/thelonewander3r/PIIScanner/issues/44) (parent). Slice A now: xlsx numeric cells [#45](https://github.com/thelonewander3r/PIIScanner/issues/45). PDF redact next: [#46](https://github.com/thelonewander3r/PIIScanner/issues/46).  
+**Tracking:** [#44](https://github.com/thelonewander3r/PIIScanner/issues/44) (parent). Slice A **done** ([#47](https://github.com/thelonewander3r/PIIScanner/pull/47) / [#45](https://github.com/thelonewander3r/PIIScanner/issues/45)). Slice B **in progress**: PDF embedded-text redact ([#46](https://github.com/thelonewander3r/PIIScanner/issues/46)).  
 **Parked:** local AI chats.  
 **Verify:** Local Tester (Windows); **no GHA**.  
 **Hard stop:** no new `v*` tag / PyPI until Emanuel go.
 
-### In scope (Slice A — #45)
+### In scope (Slice B — #46)
 
-1. `piilint redact` masks xlsx/xlsm PII whether the cell is text or numeric (write mask as text)
-2. Synthetic numeric-phone fixture; copies via `-o` only; still `piilint[office]` / openpyxl
-3. Existing string-cell xlsx tests stay green
+1. `piilint redact` masks embedded-text PII in PDFs via existing `pypdf` (same `mask_value` as scan)
+2. Image-only / empty-text: skip/no-op with a clear message; still **no OCR**
+3. Copies via `-o` only; still `piilint[office]` / pypdf; no new production deps
+4. Existing office tests stay green
 
 ### Out of scope
 
-- PDF redact (#46, next)
+- OCR / image-only rewrite
 - Local AI chats (parked)
 - Team layer / SaaS
 - In-place overwrite
@@ -114,4 +115,4 @@ owner: Product Owner
 
 ## Later backlog
 
-0.2.0 is shipped. Sprint 17 = redact gaps (#44 / #45 now, #46 PDF next); local AI chats parked. Adoption → then further team-layer / hosted sync. IDE/PR UX; more locales.
+0.2.0 is shipped. Sprint 17 = redact gaps (#44; Slice A #47 done; Slice B #46 PDF in progress); local AI chats parked. Adoption → then further team-layer / hosted sync. IDE/PR UX; more locales.
