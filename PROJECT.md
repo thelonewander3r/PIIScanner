@@ -17,19 +17,35 @@ owner: Product Owner
 
 `piilint` **0.2.0** is on PyPI (tag `v0.2.0` @ `5b889db`, OIDC Actions run [32043477260](https://github.com/thelonewander3r/PIIScanner/actions/runs/32043477260)). Repo is public. Sprints 9–16 on `main` (redact, policy packs, office, locales, team-layer **design**, Slice B local metadata history, 0.2.0 publish).
 
+**IN PROGRESS (2026-08-17):** Sprint 17 — **redact gaps**. Parent [#44](https://github.com/thelonewander3r/PIIScanner/issues/44): xlsx numeric-cell redact [#45](https://github.com/thelonewander3r/PIIScanner/issues/45) now; PDF redact next [#46](https://github.com/thelonewander3r/PIIScanner/issues/46). Local AI chats parked.  
 **DONE (2026-08-17):** Sprint 16 — **0.2.0 published**. Tracking [#40](https://github.com/thelonewander3r/PIIScanner/issues/40). Post-publish docs: [#42](https://github.com/thelonewander3r/PIIScanner/issues/42).  
 **Paused:** further team-layer / hosted sync (Slice B local MVP already shipped; no SaaS).  
-**Not started:** Sprint 17 — local AI chats.  
 **Verify:** Local Tester (Windows); **no GHA**.
 
 ---
 
-## Sprint 17 — local AI chats (NOT STARTED)
+## Sprint 17 — redact gaps (IN PROGRESS)
 
-**Goal:** Local AI chat coverage. Not started.  
-**Verify:** Local Tester (no GHA).
+**Goal:** `piilint redact` should clean the same PII `scan` already finds in office files.  
+**Tracking:** [#44](https://github.com/thelonewander3r/PIIScanner/issues/44) (parent). Slice A now: xlsx numeric cells [#45](https://github.com/thelonewander3r/PIIScanner/issues/45). PDF redact next: [#46](https://github.com/thelonewander3r/PIIScanner/issues/46).  
+**Parked:** local AI chats.  
+**Verify:** Local Tester (Windows); **no GHA**.  
+**Hard stop:** no new `v*` tag / PyPI until Emanuel go.
 
-Out of scope until kicked off: implementation, team SaaS, new tags.
+### In scope (Slice A — #45)
+
+1. `piilint redact` masks xlsx/xlsm PII whether the cell is text or numeric (write mask as text)
+2. Synthetic numeric-phone fixture; copies via `-o` only; still `piilint[office]` / openpyxl
+3. Existing string-cell xlsx tests stay green
+
+### Out of scope
+
+- PDF redact (#46, next)
+- Local AI chats (parked)
+- Team layer / SaaS
+- In-place overwrite
+- New production deps
+- New `v*` tag
 
 ---
 
@@ -98,4 +114,4 @@ Out of scope until kicked off: implementation, team SaaS, new tags.
 
 ## Later backlog
 
-0.2.0 is shipped. Adoption → then further team-layer / hosted sync. Sprint 17 (local AI chats) not started. IDE/PR UX; PDF redact; more locales.
+0.2.0 is shipped. Sprint 17 = redact gaps (#44 / #45 now, #46 PDF next); local AI chats parked. Adoption → then further team-layer / hosted sync. IDE/PR UX; more locales.

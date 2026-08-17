@@ -398,7 +398,7 @@ piilint scan ./docs
 
 - Without `[office]`, those files are skipped with a one-time stderr install hint; other formats keep scanning.
 - **No OCR** (image-only PDFs yield nothing). **No legacy `.doc`** (Word 97–2003 binary).
-- `piilint redact -o` can write cleaned `.xlsx` and `.docx` copies when `[office]` is installed. PDF redact is deferred.
+- `piilint redact -o` can write cleaned `.xlsx` and `.docx` copies when `[office]` is installed (xlsx numeric cells included). PDF redact is deferred.
 
 ## Redact (cleaned copies)
 
