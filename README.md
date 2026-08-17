@@ -12,11 +12,26 @@ Local-first PII scanner for the files developers actually commit and send — no
 
 ---
 
+## What's new in 0.2.0 (prep)
+
+This checkout is **0.2.0** — **not tagged and not on PyPI yet**. [PyPI](https://pypi.org/p/piilint) still serves **0.1.0** until Emanuel goes. Install from PyPI remains primary: `pip install piilint`.
+
+- **Office formats** via optional `piilint[office]`: Excel `.xlsx`/`.xlsm`, Word `.docx`, PDF embedded text (no OCR / no legacy `.doc`)
+- **Redact:** `piilint redact PATH -o OUT` writes cleaned copies (text, json/jsonl, csv/tsv, notebooks, parquet, xlsx, docx)
+- **Locales:** `SIN_CA` / `NINO_UK` / `BSN_NL` + `scan.phone_region` / `scan.phone_regions`
+- **Policy packs:** `examples/policies/` (`strict-ci`, `data-eng`, `open-source-lib`)
+- **Optional NER** still via `piilint[ner]`
+- **Local metadata history** (Slice B MVP, already on `main`): `report --metadata-only`, `history --since`, `sync --metadata --dry-run` — no network / no SaaS
+
+Further team-layer / hosted sync is paused. Tag `v0.2.0` waits on Emanuel.
+
+---
+
 ## Five-minute path
 
 ### 1. Install
 
-**From PyPI** ([piilint](https://pypi.org/p/piilint) — `0.1.0` published):
+**From PyPI** ([piilint](https://pypi.org/p/piilint) — `0.1.0` published; `0.2.0` not on PyPI yet):
 
 ```bash
 # recommended for CLI use
@@ -332,7 +347,7 @@ jobs:
 ### PyPI trusted publisher checklist (maintainer)
 
 Full tag-day steps: [`docs/RELEASE.md`](./docs/RELEASE.md).  
-**Hard stop:** tag `v0.1.0` only after **Emanuel’s explicit go**. No long-lived PyPI API tokens.
+**Hard stop:** tag `v0.2.0` only after **Emanuel’s explicit go** (`v0.1.0` already published). No long-lived PyPI API tokens.
 
 **Emanuel-only (PyPI UI)**
 
@@ -350,7 +365,7 @@ Full tag-day steps: [`docs/RELEASE.md`](./docs/RELEASE.md).
 **Then (after Emanuel go)**
 
 4. Do **not** store a PyPI API token in Actions secrets for this flow.
-5. From release commit on `main`: `git tag v0.1.0 && git push origin v0.1.0` → watch Actions **Release** → verify `uvx piilint --version` / `pipx install piilint`.
+5. From release commit on `main`: `git tag v0.2.0 && git push origin v0.2.0` → watch Actions **Release** → verify `uvx piilint --version` / `pipx install piilint`.
 
 ---
 
@@ -407,7 +422,11 @@ See [`examples/policies/README.md`](./examples/policies/README.md) for copy inst
 
 ## Status
 
-Phases 0–8 are complete, including **Phase 7 optional NER** (`piilint[ner]`, `setup-ner`, `--ner` for PERSON/ADDRESS). Deterministic recognizers, text + tabular + notebook adapters, console / JSON / SARIF reporters, synthetic benchmark corpus + CI gate, config/policy/noise controls, baseline subtraction, `--staged` mode, CI/release workflows, pre-commit hook, GitHub Action, and launch docs. **`0.1.0` is published** on [PyPI](https://pypi.org/p/piilint) (tag `v0.1.0`, OIDC trusted publisher). Sprint 9 adds `piilint redact` + example policy packs (see above). Future releases: [`docs/RELEASE.md`](./docs/RELEASE.md).
+**`0.1.0` is published** on [PyPI](https://pypi.org/p/piilint) (tag `v0.1.0`, OIDC trusted publisher). This tree is **0.2.0 prep** — not tagged and not on PyPI yet.
+
+**What's in 0.2.0:** office extras (`[office]` for xlsx/xlsm/docx/PDF text), `piilint redact`, locale IDs + `phone_regions`, example policy packs, optional NER (`[ner]`), and local metadata history (`report --metadata-only` / `history --since` / `sync --metadata --dry-run`; no network). Further team-layer / hosted sync is paused.
+
+Install from PyPI remains primary: `pip install piilint` (currently **0.1.0**). Future releases: [`docs/RELEASE.md`](./docs/RELEASE.md).
 
 ## Contributing & security
 

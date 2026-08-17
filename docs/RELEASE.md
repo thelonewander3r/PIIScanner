@@ -3,43 +3,81 @@
 Maintainer steps for PyPI publishes of `piilint`.
 
 **First publish (done):** `v0.1.0` → [PyPI `piilint`](https://pypi.org/p/piilint) on **2026-08-12** via OIDC (`release.yml`).  
-**Hard stop for future tags:** do **not** cut a new `v*` tag or publish until **Emanuel** gives an explicit go.
+**Next release (PREP only):** `0.2.0` — version + docs in this tree. **Do not cut `v0.2.0` or publish until Emanuel gives an explicit go.**
 
-See also: [issue #14](https://github.com/thelonewander3r/PIIScanner/issues/14), [issue #16](https://github.com/thelonewander3r/PIIScanner/issues/16) (Sprint 8 hardening, closed), [`PROJECT.md`](../PROJECT.md), README trusted-publisher checklist.
+See also: [issue #40](https://github.com/thelonewander3r/PIIScanner/issues/40) (Sprint 16 prep), [issue #14](https://github.com/thelonewander3r/PIIScanner/issues/14), [issue #16](https://github.com/thelonewander3r/PIIScanner/issues/16) (Sprint 8 hardening, closed), [`PROJECT.md`](../PROJECT.md), README trusted-publisher checklist.
+
+---
+
+## 0.2.0 prep checklist (Sprint 16)
+
+**Verify path:** Local Tester on Windows. **Not GitHub Actions.**
+
+Prep (this PR / this tree):
+
+- [ ] Version is `0.2.0` in `pyproject.toml` and `src/piilint/__init__.py`
+- [ ] CHANGELOG folded into `## [0.2.0] — 2026-08-17` with a fresh empty `[Unreleased]`
+- [ ] README what's-new + formats / extras / redact / locales; PyPI install still primary; do **not** claim 0.2.0 is on PyPI
+- [ ] Local `uv build` dry-run (wheel + sdist exist); do **not** upload
+- [ ] Developer local gate: ruff / format / mypy / pytest / `piilint --version` prints `0.2.0`
+- [ ] Local Tester re-runs required + package-smoke + office on Windows
+- [ ] Lead Dev LGTM
+- [ ] Prep PR merged
+- [ ] **Hard stop:** no `git tag`, no tag push, no PyPI / TestPyPI until Emanuel go
+
+Tag / publish (same runbook as `v0.1.0` — **all unchecked; wait for Emanuel go**):
+
+- [ ] Emanuel explicit go to cut `v0.2.0`
+- [ ] From the release commit on `main`: `git tag v0.2.0` and `git push origin v0.2.0`
+- [ ] Watch Actions **Release** for tag `v0.2.0`
+- [ ] Verify `uvx piilint --version` / `pipx install piilint` prints `0.2.0`
+- [ ] TestPyPI only if Emanuel asks
 
 ---
 
 ## How we know releases are good
 
-Before any production `v*` tag, CI and local checks must prove that a **built artifact** (not only an editable checkout) works:
+**For 0.2.0:** Local Tester (Windows) is the required verify path — **not GitHub Actions.**
 
 | Gate | Where | What it proves |
 |---|---|---|
-| Default matrix `test` | `.github/workflows/ci.yml` | ruff / mypy / pytest+benchmark / `piilint --version` on ubuntu + windows + macos × Python 3.10 + 3.13 |
-| `package-smoke` (**required**) | same workflow | `uv build` → clean venv → `uv pip install --python .smoke-venv` **wheel only** (no editable, no `--extra dev`) on **ubuntu + windows** → `piilint --version` → scan `tests/corpus/text` with `--fail-on low` → **exit 1** + **no raw corpus PII** in stdout/stderr |
-| `action-smoke` | same workflow | `action.yml` + `.pre-commit-hooks.yaml` parse; composite action `uses: ./` on `tests/corpus/text` with `fail-on: never` |
-| `ner-smoke` (separate) | same workflow (ubuntu) | optional `uv sync --extra ner` → `piilint setup-ner` → `--ner` scan of synthetic prose; must **not** break default matrix |
-| Local | maintainer machine | `uv run pytest -q` still green on the release commit |
+| Required (ruff / mypy / pytest) | **Local Tester (Windows)** | ruff / mypy / pytest+benchmark / `piilint --version` == `0.2.0` |
+| `package-smoke` (**required**) | **Local Tester (Windows)** | `uv build` → clean venv → install **wheel only** (no editable, no `--extra dev`) → `piilint --version` → scan `tests/corpus/text` with `--fail-on low` → **exit 1** + **no raw corpus PII** in stdout/stderr |
+| `office` | **Local Tester (Windows)** | `uv sync --extra office` + office-marked tests |
+| Default matrix `test` (informational) | `.github/workflows/ci.yml` | same checks on ubuntu + windows + macos × Python 3.10 + 3.13 — **not** the 0.2.0 gate |
+| `action-smoke` (informational) | same workflow | `action.yml` + `.pre-commit-hooks.yaml` parse; composite action `uses: ./` |
+| `ner-smoke` (separate, informational) | same workflow (ubuntu) | optional `uv sync --extra ner` → `piilint setup-ner` → `--ner` scan of synthetic prose |
 
-**Hard stop:** no production `v*` tag and no prod PyPI upload without Emanuel’s explicit go. TestPyPI dry-run only with Emanuel go (see below).
+**Hard stop:** no production `v*` tag and no prod PyPI upload without Emanuel's explicit go. TestPyPI dry-run only with Emanuel go (see below).
 
 ---
 
 ## 0. Preconditions (prep PR)
 
-For **`v0.1.0` (done 2026-08-12)** these were met. Re-check the list before any **future** tag:
+### `v0.1.0` (done 2026-08-12)
+
+These were met for the first publish:
 
 - [x] Prep PR merged to `main` (metadata, CHANGELOG fold, README install wording, this runbook).
 - [x] CI green on `main` (including **package-smoke** on ubuntu + windows).
 - [x] Local `uv build` previously succeeded; wheel entry point `piilint` present.
-- [x] Version is `0.1.0` in `pyproject.toml` and `src/piilint/__init__.py` *(bump for next release)*.
+- [x] Version is `0.1.0` in `pyproject.toml` and `src/piilint/__init__.py`.
 - [x] Sprint 8 release-hardening AC met ([issue #16](https://github.com/thelonewander3r/PIIScanner/issues/16)).
+
+### `v0.2.0` (prep — this sprint; tag still waits)
+
+- [ ] Prep PR merged to `main` (version bump, CHANGELOG fold, README what's-new, this runbook).
+- [ ] Local Tester green on the prep branch (required + **package-smoke** + office). **Not GHA.**
+- [ ] Local `uv build` succeeded; wheel + sdist present; entry point `piilint` present.
+- [ ] Version is `0.2.0` in `pyproject.toml` and `src/piilint/__init__.py`.
+- [ ] CHANGELOG dated `## [0.2.0] — 2026-08-17`.
+- [ ] Written hard stop: no `v0.2.0` tag until Emanuel go.
 
 ---
 
 ## 1. Trusted publisher + GitHub environment
 
-These clicks require PyPI + GitHub org/repo admin access.
+These clicks require PyPI + GitHub org/repo admin access. Already completed for `v0.1.0`; confirm still valid before any future tag.
 
 ### Emanuel-only — PyPI UI
 
@@ -51,7 +89,7 @@ These clicks require PyPI + GitHub org/repo admin access.
    - **Repository:** `PIIScanner`
    - **Workflow name:** `release.yml` (filename only, not path)
    - **Environment name:** `pypi`
-3. If the project already exists, add the same trusted publisher under that project’s Publishing settings.
+3. If the project already exists, add the same trusted publisher under that project's Publishing settings.
 4. **Do not** create or store a long-lived PyPI API token for this flow.
 
 ### Emanuel-only — GitHub UI
@@ -76,7 +114,7 @@ Optional rehearsal **before** the production tag. **Do not upload** unless Emanu
 
 ### Why
 
-TestPyPI lets maintainers prove OIDC trusted publishing end-to-end without publishing `0.1.0` to production PyPI.
+TestPyPI lets maintainers prove OIDC trusted publishing end-to-end without publishing the **next** version (`0.2.0`) to production PyPI. (`0.1.0` already went to prod on 2026-08-12.)
 
 ### Emanuel-only — TestPyPI UI
 
@@ -104,33 +142,34 @@ TestPyPI lets maintainers prove OIDC trusted publishing end-to-end without publi
 ### Dry-run upload policy
 
 - **Default:** document only; **no upload**.
-- **Upload:** only with Emanuel’s explicit go for that dry-run.
+- **Upload:** only with Emanuel's explicit go for that dry-run.
 - After a TestPyPI upload (if any), verify install from TestPyPI:
 
   ```bash
-  pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ piilint==0.1.0
+  pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ piilint==0.2.0
   piilint --version
   ```
 
   (`--extra-index-url` may be needed for dependencies that exist only on prod PyPI.)
 
-- TestPyPI success does **not** authorize a production `v*` tag; prod still needs a separate Emanuel go.
+- TestPyPI success does **not** authorize a production `v0.2.0` tag; prod still needs a separate Emanuel go.
 
 ---
 
 ## 2. Wait for Emanuel go
 
-Product Owner / Lead Dev: **stop here** until Emanuel explicitly says to cut the **next** tag.
+Product Owner / Lead Dev: **stop here** until Emanuel explicitly says to cut the **next** tag (`v0.2.0`).
 
-**`v0.1.0`:** go received; tagged and published 2026-08-12.
+**`v0.1.0`:** go received; tagged and published 2026-08-12.  
+**`v0.2.0`:** **wait for Emanuel go.** Do not tag.
 
-Checklist before asking for a **future** release:
+Checklist before asking for the `v0.2.0` release:
 
 - [x] Trusted publisher configured *(done for `v0.1.0`; confirm still valid)*.
 - [x] GitHub `pypi` environment exists.
-- [ ] CHANGELOG date set for the new version (or set in the same commit as the tag).
+- [ ] CHANGELOG date set for `0.2.0` (or set in the same commit as the tag).
 - [ ] No secrets or unexpected files in a fresh `uv build` inspect.
-- [ ] `package-smoke` green on ubuntu + windows for the release commit.
+- [ ] Local Tester `package-smoke` green on Windows for the release commit (**not GHA**).
 
 ---
 
@@ -140,17 +179,19 @@ From an up-to-date `main` (or the agreed release commit):
 
 ```bash
 # Optional: set CHANGELOG date to today, commit, merge — then:
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.2.0
+git push origin v0.2.0
 ```
 
 Do **not** use a lightweight mistaken tag name; the workflow matches `v*`.
+
+Historical: `v0.1.0` was cut from `main` on 2026-08-12 after Emanuel go.
 
 ---
 
 ## 4. Watch release.yml
 
-1. Open Actions → **Release** workflow for the `v0.1.0` tag.
+1. Open Actions → **Release** workflow for the `v0.2.0` tag *(after Emanuel go; `v0.1.0` already published)*.
 2. Confirm **Build distributions** succeeds.
 3. Confirm **Publish to PyPI (OIDC)** runs in the `pypi` environment (approve if protection rules require it).
 4. On failure: read job logs; common first-publish issues are wrong workflow filename, wrong environment name, or missing trusted publisher — fix UI config and re-tag only if needed (never force-push tags without explicit agreement).
@@ -163,7 +204,7 @@ PyPI project URL (after success): https://pypi.org/p/piilint
 
 ```bash
 uvx piilint --version
-# expect: 0.1.0 (or equivalent)
+# expect: 0.2.0 (after the v0.2.0 publish; today PyPI still serves 0.1.0)
 
 pipx install piilint
 piilint --version
@@ -185,7 +226,7 @@ After each successful publish, confirm README primary install still points at Py
 
 ## 6. Action / pre-commit manual check (if CI skipped)
 
-CI `action-smoke` covers this on PRs. Manual fallback:
+Local Tester / maintainer fallback (GHA `action-smoke` is informational for 0.2.0):
 
 ```bash
 # YAML still parse
@@ -194,7 +235,7 @@ python -c "import yaml; yaml.safe_load(open('action.yml')); yaml.safe_load(open(
 # Composite action: use a throwaway workflow or act; or from a PR that runs action-smoke.
 # Pre-commit hook snippet (consumer repo):
 #   - repo: https://github.com/thelonewander3r/PIIScanner
-#     rev: v0.1.0   # after tag
+#     rev: v0.2.0   # after tag (today pin v0.1.0 — the published tag)
 #     hooks:
 #       - id: piilint
 ```
@@ -212,4 +253,4 @@ pre-commit try-repo . piilint --verbose --all-files
 - No TestPyPI upload unless Emanuel asks (see §1b).
 - No long-lived PyPI tokens in GitHub secrets.
 - No `v*` tag from prep branches without Emanuel go.
-- First prod upload (`v0.1.0`) completed 2026-08-12; no further prod upload without a new Emanuel go.
+- First prod upload (`v0.1.0`) completed 2026-08-12; **`v0.2.0` tag and prod upload wait on a new Emanuel go.**

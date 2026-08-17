@@ -523,9 +523,7 @@ def test_concurrent_migration_initialization(tmp_path: Path) -> None:
     assert errors == []
     conn = open_history(db)
     try:
-        version = conn.execute(
-            "SELECT value FROM meta WHERE key = 'schema_version'"
-        ).fetchone()
+        version = conn.execute("SELECT value FROM meta WHERE key = 'schema_version'").fetchone()
         run_count = conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0]
     finally:
         conn.close()
@@ -568,9 +566,7 @@ def test_cli_integrity_error_during_report_exits_2(
     assert str(db) not in result.output
 
 
-def test_cli_corrupt_history_db_exits_2(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_cli_corrupt_history_db_exits_2(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     corrupt = tmp_path / "history.sqlite3"
     corrupt.write_bytes(b"not a sqlite database")
     monkeypatch.setenv("PIILINT_HISTORY_PATH", str(corrupt))
@@ -598,9 +594,7 @@ def test_cli_corrupt_history_db_exits_2(
     assert "Traceback" not in report.output
 
 
-def test_cli_locked_history_db_exits_2(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_cli_locked_history_db_exits_2(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     db = tmp_path / "history.sqlite3"
     monkeypatch.setenv("PIILINT_HISTORY_PATH", str(db))
     open_history(db).close()
@@ -625,9 +619,7 @@ def test_cli_locked_history_db_exits_2(
         hold.close()
 
 
-def test_report_fail_on_exit_codes(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_report_fail_on_exit_codes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     db = tmp_path / "history.sqlite3"
     monkeypatch.setenv("PIILINT_HISTORY_PATH", str(db))
     sample = tmp_path / "leak.txt"
@@ -656,9 +648,7 @@ def test_report_fail_on_exit_codes(
     assert never.exit_code == 0, never.output
 
 
-def test_report_fail_on_config_precedence(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_report_fail_on_config_precedence(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     db = tmp_path / "history.sqlite3"
     monkeypatch.setenv("PIILINT_HISTORY_PATH", str(db))
     (tmp_path / "piilint.toml").write_text(
@@ -692,9 +682,7 @@ def test_report_output_timestamp_matches_sqlite_run(
     doc = json.loads(out.read_text(encoding="utf-8"))
     conn = open_history(db)
     try:
-        row = conn.execute(
-            "SELECT scanned_at FROM runs ORDER BY id DESC LIMIT 1"
-        ).fetchone()
+        row = conn.execute("SELECT scanned_at FROM runs ORDER BY id DESC LIMIT 1").fetchone()
     finally:
         conn.close()
     assert row is not None

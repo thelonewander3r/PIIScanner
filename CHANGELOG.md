@@ -7,22 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-08-17
+
+Prep for the next PyPI release of `piilint`. **Not tagged or published** until Emanuel's explicit go. `0.1.0` remains the published version on [PyPI](https://pypi.org/p/piilint).
+
 ### Added
 
-- Sprint 15 Slice B (local MVP): metadata-only report/history/sync dry-run — `piilint report --metadata-only` (auto-records local SQLite), `piilint history --since`, `piilint sync --metadata --dry-run` (no network). Trust-boundary fields only; default scan path unchanged. Tracking [#37](https://github.com/thelonewander3r/PIIScanner/issues/37).
-
+- Sprint 15 Slice B (local MVP, shipped on `main` via [#38](https://github.com/thelonewander3r/PIIScanner/pull/38)): metadata-only report/history/sync dry-run — `piilint report --metadata-only` (auto-records local SQLite), `piilint history --since`, `piilint sync --metadata --dry-run` (no network). Trust-boundary fields only; default scan path unchanged. Tracking [#37](https://github.com/thelonewander3r/PIIScanner/issues/37).
 - Sprint 14 (design): [`docs/TEAM_LAYER.md`](./docs/TEAM_LAYER.md) — team / findings-metadata layer design (trust boundary, MVP slice order A→B→C, CLI proposals, open questions). Docs only; no SaaS/backend. Tracking [#32](https://github.com/thelonewander3r/PIIScanner/issues/32).
-
 - Sprint 13: `.docx` scan under optional `piilint[office]` (`python-docx`); paragraph + table + header/footer text; legacy `.doc` not supported; missing extra skips with the same one-time stderr hint as xlsx/PDF.
 - `piilint redact` stretch: cleaned `.docx` copies (paragraph/table/header/footer string runs via `paragraph.text = …`; sources never modified).
-
 - Sprint 12 locale coverage: multi-region phones via `scan.phone_region` + `scan.phone_regions`; national IDs `SIN_CA` (on, Luhn), `NINO_UK` (off, context-required), `BSN_NL` (off, 11-proef). Detection aid only — not legal ID verification / not GDPR-HIPAA-PCI compliance.
 - Optional `piilint[office]` (`openpyxl` + `pypdf` + `python-docx`): scan `.xlsx`/`.xlsm`, `.docx`, and PDF **embedded text** (no OCR / no `.doc`); missing extra skips those files with a stderr hint.
 - `piilint redact` stretch: cleaned `.xlsx` copies. PDF redact deferred.
-- `piilint redact PATH -o OUT_DIR` ? write cleaned **copies** with PII spans rewritten via existing `mask_value` (text + json/jsonl + csv/tsv; no in-place; no new base deps).
+- `piilint redact PATH -o OUT_DIR` — write cleaned **copies** with PII spans rewritten via existing `mask_value` (text + json/jsonl + csv/tsv; no in-place; no new base deps).
 - Example org policy packs under `examples/policies/` (`strict-ci`, `data-eng`, `open-source-lib`) + disclaimer README.
 - `piilint redact` now also cleans **`.ipynb`** (source + outputs) and **`.parquet`** string columns (Sprint 10).
-
 
 ## [0.1.0] — 2026-08-12
 
@@ -43,4 +43,3 @@ First public release on [PyPI](https://pypi.org/p/piilint). Published via OIDC t
 
 - Optional NER is available as `piilint[ner]` (not pulled by the base install).
 - Package name is `piilint` (`piiscan` was taken on PyPI).
-
