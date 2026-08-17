@@ -377,6 +377,7 @@ PERSON/ADDRESS detection is **off by default** and lives behind an optional extr
 pip install "piilint[ner]"    # or: uv sync --extra ner
 piilint setup-ner             # downloads en_core_web_sm (network; once)
 piilint . --ner               # enable PERSON + ADDRESS for this run
+piilint redact ./data -o ./data-clean --ner   # same entities while redacting
 ```
 
 - Without `[ner]` installed, normal scans are unchanged; `piilint . --ner` exits **2** with an install hint.
@@ -398,7 +399,7 @@ piilint scan ./docs
 
 - Without `[office]`, those files are skipped with a one-time stderr install hint; other formats keep scanning.
 - **No OCR** (image-only PDFs yield nothing). **No legacy `.doc`** (Word 97–2003 binary).
-- `piilint redact -o` can write cleaned `.xlsx`, `.docx`, and PDF **embedded-text** copies when `[office]` is installed (xlsx numeric cells included). Still **no OCR**; image-only PDFs are a no-op. Layout may not be perfect (subset fonts / split glyphs).
+- `piilint redact -o` can write cleaned `.xlsx`, `.docx`, and PDF **embedded-text** copies when `[office]` is installed (xlsx numeric cells included). `redact --ner` also masks PERSON/ADDRESS in xlsx when `[ner]` is installed. Still **no OCR**; image-only PDFs are a no-op. Layout may not be perfect (subset fonts / split glyphs).
 
 ## Redact (cleaned copies)
 

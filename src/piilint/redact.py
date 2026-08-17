@@ -16,7 +16,7 @@ from typing import Any, cast
 
 from piilint.adapters.text import TextAdapter, looks_binary
 from piilint.config import Config
-from piilint.engine import _build_registry, scan_text_matches
+from piilint.engine import _build_registry, enable_optional_ner, scan_text_matches
 from piilint.findings import EntityType, Finding, Location, mask_value
 from piilint.policy import apply_policy
 from piilint.recognizers import Match, RecognizerRegistry
@@ -897,6 +897,11 @@ def redact_tree(
 
     root = target.resolve()
     base = root if root.is_dir() else root.parent
+    # Mirror scan_path: --ner must enable PERSON/ADDRESS on the config used by
+    # apply_policy, not only on the recognizer registry.
+    config = config.copy()
+    if enable_ner:
+        enable_optional_ner(config)
     registry = _build_registry(config, enable_ner=enable_ner)
 
     written = 0

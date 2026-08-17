@@ -12,7 +12,7 @@ from rich.console import Console
 from piilint import __version__
 from piilint.baseline import BaselineError, load_baseline, subtract_baseline, write_baseline
 from piilint.config import Config, ConfigError, load_config
-from piilint.engine import ScanResult, scan_path
+from piilint.engine import ScanResult, enable_optional_ner, scan_path
 from piilint.findings import Severity
 from piilint.gitutil import GitError, find_repo_root, staged_files
 from piilint.history import (
@@ -143,10 +143,7 @@ def _prepare_scan(
         except ner_mod.NerModelError as exc:
             typer.secho(str(exc), fg=typer.colors.RED, err=True)
             raise typer.Exit(2) from exc
-        from piilint.findings import EntityType as _EntityType
-
-        config.entity_enabled[_EntityType.PERSON] = True
-        config.entity_enabled[_EntityType.ADDRESS] = True
+        enable_optional_ner(config)
 
     try:
         threshold = _fail_on_rank(config.scan.fail_on)
@@ -485,6 +482,10 @@ def redact_cmd(
         except ner_mod.NerDependencyError as exc:
             typer.secho(str(exc), fg=typer.colors.RED, err=True)
             raise typer.Exit(2) from exc
+        except ner_mod.NerModelError as exc:
+            typer.secho(str(exc), fg=typer.colors.RED, err=True)
+            raise typer.Exit(2) from exc
+        enable_optional_ner(config)
 
     try:
         result = redact_tree(path, output, config=config, enable_ner=ner)

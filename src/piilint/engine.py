@@ -228,6 +228,18 @@ def _iter_adapter_stream(
         return "units", adapter.iter_units(file_path, rel_path=rel)
 
 
+def enable_optional_ner(config: Config) -> None:
+    """Turn on PERSON/ADDRESS for a --ner run.
+
+    Scan and redact both run matches through ``apply_policy``, which drops
+    disabled entities. Enabling recognizers alone is not enough — the config
+    used for policy must flip too, or PERSON/ADDRESS spans are found then
+    discarded (xlsx redact --ner wrote phones only).
+    """
+    config.entity_enabled[EntityType.PERSON] = True
+    config.entity_enabled[EntityType.ADDRESS] = True
+
+
 def _build_registry(config: Config, *, enable_ner: bool = False) -> RecognizerRegistry:
     ner_entities = (EntityType.PERSON, EntityType.ADDRESS)
     ner_wanted = enable_ner or any(config.is_entity_enabled(e) for e in ner_entities)
@@ -286,8 +298,7 @@ def scan_path(
     if enable_ip is not None:
         cfg.entity_enabled[EntityType.IP_ADDRESS] = enable_ip
     if enable_ner:
-        cfg.entity_enabled[EntityType.PERSON] = True
-        cfg.entity_enabled[EntityType.ADDRESS] = True
+        enable_optional_ner(cfg)
     if phone_region is not None:
         cfg.scan.phone_region = phone_region
     if phone_regions is not None:
