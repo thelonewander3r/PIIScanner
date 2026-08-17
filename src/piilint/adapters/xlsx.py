@@ -44,24 +44,45 @@ class XlsxAdapter:
     def supports(self, path: Path) -> bool:
         return path.suffix.lower() in self.extensions
 
-    def iter_units(self, path: Path, *, rel_path: str) -> Iterator[Unit]:
+    def iter_units(
+        self,
+        path: Path,
+        *,
+        rel_path: str,
+        columns: list[str] | None = None,
+    ) -> Iterator[Unit]:
         if not office_xlsx_available():
+            if columns:
+                from piilint.columns import ColumnError
+
+                raise ColumnError(
+                    "--columns requires piilint[office]. "
+                    'Install with: pip install "piilint[office]"'
+                )
             _warn_missing_once()
             return
         from openpyxl import load_workbook
 
+        # read_only cannot rewind after cataloging first rows for --columns.
         try:
-            wb = load_workbook(path, read_only=True, data_only=True)
+            wb = load_workbook(path, read_only=not bool(columns), data_only=True)
         except OSError:
             return
         except Exception:  # noqa: BLE001 — corrupt workbook
             return
 
         try:
+            selected: set[tuple[str, int]] | None = None
+            if columns:
+                from piilint.columns import resolve_workbook_columns
+
+                selected = resolve_workbook_columns(wb, columns)
             for sheet in wb.worksheets:
                 headers: dict[int, str] = {}
                 for row_idx, row in enumerate(sheet.iter_rows(values_only=True), start=1):
                     for col_idx, raw in enumerate(row, start=1):
+                        if selected is not None and (sheet.title, col_idx) not in selected:
+                            continue
                         text = _cell_text(raw)
                         if text is None:
                             continue

@@ -73,6 +73,7 @@ class ScanConfig:
     exclude: list[str] = field(default_factory=list)
     phone_region: str = "US"
     phone_regions: list[str] = field(default_factory=list)
+    columns: list[str] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -103,6 +104,7 @@ class Config:
                 exclude=list(self.scan.exclude),
                 phone_region=self.scan.phone_region,
                 phone_regions=list(self.scan.phone_regions),
+                columns=list(self.scan.columns),
             ),
             entity_enabled=dict(self.entity_enabled),
             severity_overrides=dict(self.severity_overrides),

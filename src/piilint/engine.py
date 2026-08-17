@@ -214,18 +214,24 @@ def _iter_adapter_stream(
     *,
     rel: str,
     sample_rows: int | None,
+    columns: list[str] | None = None,
 ) -> tuple[str, Iterator[Any]]:
     """Return ('batches'|'units', iterator)."""
+    extra: dict[str, Any] = {}
+    if columns and getattr(adapter, "name", None) == "xlsx":
+        extra["columns"] = columns
     batch_fn: Callable[..., Any] | None = getattr(adapter, "iter_column_batches", None)
     if batch_fn is not None:
         try:
-            return "batches", batch_fn(file_path, rel_path=rel, sample_rows=sample_rows)
+            return "batches", batch_fn(file_path, rel_path=rel, sample_rows=sample_rows, **extra)
         except TypeError:
-            return "batches", batch_fn(file_path, rel_path=rel)
+            return "batches", batch_fn(file_path, rel_path=rel, **extra)
     try:
-        return "units", adapter.iter_units(file_path, rel_path=rel, sample_rows=sample_rows)
+        return "units", adapter.iter_units(
+            file_path, rel_path=rel, sample_rows=sample_rows, **extra
+        )
     except TypeError:
-        return "units", adapter.iter_units(file_path, rel_path=rel)
+        return "units", adapter.iter_units(file_path, rel_path=rel, **extra)
 
 
 def enable_optional_ner(config: Config) -> None:
@@ -282,6 +288,7 @@ def scan_path(
     exclude: list[str] | None = None,
     sample_rows: int | None = None,
     only_paths: list[Path] | None = None,
+    columns: list[str] | None = None,
 ) -> ScanResult:
     """Scan a file or directory.
 
@@ -307,6 +314,8 @@ def scan_path(
         ]
     if exclude is not None:
         cfg.scan.exclude = list(exclude)
+    if columns is not None:
+        cfg.scan.columns = list(columns)
 
     # Pre-policy floor: keep matches that might pass after downweight adjustments
     # are not needed upward; downweight only lowers confidence. Use config floor
@@ -323,12 +332,21 @@ def scan_path(
     files_scanned = 0
 
     base = root if root.is_dir() else root.parent
-    for file_path in iter_files(
-        root,
-        include=include,
-        exclude=cfg.scan.exclude or None,
-        only_paths=only_paths,
-    ):
+    selectors = list(cfg.scan.columns)
+    file_paths = list(
+        iter_files(
+            root,
+            include=include,
+            exclude=cfg.scan.exclude or None,
+            only_paths=only_paths,
+        )
+    )
+    if selectors:
+        from piilint.columns import ensure_sheet_files
+
+        ensure_sheet_files(file_paths)
+
+    for file_path in file_paths:
         adapter = select_adapter(file_path, adapters)
         if adapter is None:
             continue
@@ -337,7 +355,13 @@ def scan_path(
         except ValueError:
             rel = file_path.name
 
-        mode, stream = _iter_adapter_stream(adapter, file_path, rel=rel, sample_rows=sample_rows)
+        mode, stream = _iter_adapter_stream(
+            adapter,
+            file_path,
+            rel=rel,
+            sample_rows=sample_rows,
+            columns=selectors or None,
+        )
         buckets: dict[tuple[str, str, EntityType], _ColumnBucket] = {}
         non_null_by_column: dict[str, int] = {}
         saw_item = False

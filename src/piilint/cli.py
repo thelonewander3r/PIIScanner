@@ -11,6 +11,7 @@ from rich.console import Console
 
 from piilint import __version__
 from piilint.baseline import BaselineError, load_baseline, subtract_baseline, write_baseline
+from piilint.columns import ColumnError, parse_column_args
 from piilint.config import Config, ConfigError, load_config
 from piilint.engine import ScanResult, enable_optional_ner, scan_path
 from piilint.findings import Severity
@@ -116,6 +117,7 @@ def _prepare_scan(
     exclude: list[str] | None = None,
     baseline: Path | None = None,
     staged: bool = False,
+    columns: list[str] | None = None,
 ) -> tuple[Config, ScanResult, int]:
     """Load config, scan, optional baseline subtract. Returns (config, result, fail threshold)."""
     if not path.exists():
@@ -172,7 +174,11 @@ def _prepare_scan(
             sample_rows=sample_rows,
             only_paths=only_paths,
             enable_ner=enable_ner,
+            columns=columns,
         )
+    except ColumnError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(2) from exc
     except Exception as exc:  # noqa: BLE001 — unexpected errors are exit 2, not 1
         typer.secho(f"Scan failed: {exc}", fg=typer.colors.RED, err=True)
         raise typer.Exit(2) from exc
@@ -206,6 +212,7 @@ def _run_scan(
     staged: bool,
     output_format: OutputFormat,
     show_matches: bool,
+    columns: list[str] | None = None,
 ) -> None:
     if show_matches:
         if output_format != "console":
@@ -233,6 +240,7 @@ def _run_scan(
         exclude=exclude,
         baseline=baseline,
         staged=staged,
+        columns=columns,
     )
 
     if output_format == "json":
@@ -320,6 +328,16 @@ def scan_cmd(
             help="Unmask Sample column on console (local triage only; refused when CI=true).",
         ),
     ] = False,
+    columns: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--columns",
+            help=(
+                "Limit scan to these Excel columns (header names or A1 letters; "
+                "xlsx/xlsm only). Repeatable or comma-separated."
+            ),
+        ),
+    ] = None,
 ) -> None:
     fmt = output_format.lower().strip()
     if fmt not in {"console", "json", "sarif"}:
@@ -341,6 +359,7 @@ def scan_cmd(
         staged=staged,
         output_format=fmt,  # type: ignore[arg-type]
         show_matches=show_matches,
+        columns=parse_column_args(columns),
     )
 
 
@@ -450,6 +469,16 @@ def redact_cmd(
         list[str] | None,
         typer.Option("--exclude", help="Glob to exclude (repeatable; overrides config exclude)."),
     ] = None,
+    columns: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--columns",
+            help=(
+                "Limit redact to these Excel columns (header names or A1 letters; "
+                "xlsx/xlsm only). Repeatable or comma-separated."
+            ),
+        ),
+    ] = None,
 ) -> None:
     """Copy supported files under PATH into -o with PII spans rewritten.
 
@@ -488,7 +517,12 @@ def redact_cmd(
         enable_optional_ner(config)
 
     try:
-        result = redact_tree(path, output, config=config, enable_ner=ner)
+        result = redact_tree(
+            path, output, config=config, enable_ner=ner, columns=parse_column_args(columns)
+        )
+    except ColumnError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(2) from exc
     except RedactError as exc:
         typer.secho(f"Redact error: {exc}", fg=typer.colors.RED, err=True)
         raise typer.Exit(2) from exc

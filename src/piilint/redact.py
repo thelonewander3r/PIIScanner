@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from piilint.adapters.text import TextAdapter, looks_binary
+from piilint.columns import ensure_sheet_files, resolve_workbook_columns
 from piilint.config import Config
 from piilint.engine import _build_registry, enable_optional_ner, scan_text_matches
 from piilint.findings import EntityType, Finding, Location, mask_value
@@ -469,6 +470,7 @@ def _redact_xlsx_file(
     registry: RecognizerRegistry,
     config: Config,
     rel_path: str,
+    columns: list[str] | None = None,
 ) -> int:
     """Rewrite string and numeric PII cells into a new workbook under ``dest``."""
     try:
@@ -484,10 +486,15 @@ def _redact_xlsx_file(
         raise RedactError(f"Invalid workbook {rel_path}: {exc}") from exc
 
     total = 0
+    selected: set[tuple[str, int]] | None = None
+    if columns:
+        selected = resolve_workbook_columns(wb, columns)
     for sheet in wb.worksheets:
         headers: dict[int, str] = {}
         for row in sheet.iter_rows():
             for cell in row:
+                if selected is not None and (sheet.title, cell.column) not in selected:
+                    continue
                 value = cell.value
                 if value is None or isinstance(value, bool):
                     # Keep empty/bools unchanged. Numeric PII is stringified below.
@@ -888,6 +895,7 @@ def redact_tree(
     *,
     config: Config,
     enable_ner: bool = False,
+    columns: list[str] | None = None,
 ) -> RedactResult:
     """Redact supported files under ``target`` into ``output_dir`` (mirrors relpaths)."""
     if not target.exists():
@@ -902,13 +910,20 @@ def redact_tree(
     config = config.copy()
     if enable_ner:
         enable_optional_ner(config)
+    if columns is not None:
+        config.scan.columns = list(columns)
+    selectors = list(config.scan.columns)
     registry = _build_registry(config, enable_ner=enable_ner)
 
     written = 0
     skipped = 0
     spans = 0
 
-    for file_path in iter_files(root, exclude=config.scan.exclude or None):
+    file_paths = list(iter_files(root, exclude=config.scan.exclude or None))
+    if selectors:
+        ensure_sheet_files(file_paths)
+
+    for file_path in file_paths:
         kind = _supported(file_path)
         if kind is None:
             skipped += 1
@@ -946,7 +961,12 @@ def redact_tree(
                 )
             elif kind == "xlsx":
                 n = _redact_xlsx_file(
-                    file_path, dest, registry=registry, config=config, rel_path=rel
+                    file_path,
+                    dest,
+                    registry=registry,
+                    config=config,
+                    rel_path=rel,
+                    columns=selectors or None,
                 )
             elif kind == "docx":
                 n = _redact_docx_file(
